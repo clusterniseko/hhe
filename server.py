@@ -7,7 +7,7 @@ app = Flask(__name__)
 # ── CORS: permite llamadas desde GitHub Pages ──────────────────────────
 # Cambia el origen por tu URL real de GitHub Pages
 # Ejemplo: "https://tuusuario.github.io"
-CORS(app, origins=["https://TU-USUARIO.github.io", "http://localhost"])
+CORS(app, origins=["https://yenryortega.github.io", "http://localhost"])
 
 DB = "registrations.db"
 
