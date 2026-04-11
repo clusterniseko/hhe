@@ -5,7 +5,7 @@ import psycopg2, psycopg2.extras, os
 app = Flask(__name__)
 
 # ── CORS: permite llamadas desde GitHub Pages ──────────────────────────
-CORS(app, origins=["https://TU-USUARIO.github.io", "http://localhost"])
+CORS(app, origins=["https://yenryortega.github.io", "http://localhost"])
 
 # ── Conexión a PostgreSQL ──────────────────────────────────────────────
 # Railway inyecta DATABASE_URL automáticamente al agregar PostgreSQL
