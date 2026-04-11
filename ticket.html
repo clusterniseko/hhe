@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Hilton Niseko Village - Tu Ticket</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700;800&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: hsl(220, 55%, 14%);
+      color: hsl(40, 50%, 95%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1rem;
+    }
+    h1 { font-family: 'Playfair Display', serif; }
+    .wrapper {
+      width: 100%;
+      max-width: 420px;
+      text-align: center;
+      animation: floatIn 0.6s ease-out;
+    }
+    .hotel-name {
+      font-family: 'Playfair Display', serif;
+      font-size: 0.85rem;
+      letter-spacing: 0.25em;
+      text-transform: uppercase;
+      color: hsl(40, 60%, 65%);
+      margin-bottom: 2rem;
+    }
+    #ticket-view img {
+      width: 280px;
+      cursor: pointer;
+      transition: transform 0.3s;
+      filter: drop-shadow(0 0 35px hsla(40, 80%, 50%, 0.35));
+    }
+    #ticket-view img:hover { transform: scale(1.05); }
+    #ticket-view p {
+      color: hsl(220, 15%, 55%);
+      font-size: 0.875rem;
+      margin-top: 1.5rem;
+    }
+    /* Estado de carga al usar ticket */
+    #ticket-view .loading-msg {
+      color: hsl(40, 60%, 65%);
+      font-size: 0.875rem;
+      margin-top: 1.5rem;
+      display: none;
+    }
+    /* Error */
+    .ticket-error {
+      background: hsla(0, 75%, 55%, 0.12);
+      border: 1px solid hsla(0, 75%, 55%, 0.4);
+      color: hsl(0, 85%, 70%);
+      padding: 0.75rem 1rem;
+      border-radius: 10px;
+      margin-top: 1rem;
+      font-size: 0.875rem;
+      display: none;
+    }
+    #gracias {
+      display: none;
+    }
+    #gracias h1 {
+      font-size: 3.5rem;
+      font-weight: 700;
+      line-height: 1.1;
+      margin-bottom: 1rem;
+      color: hsl(40, 50%, 95%);
+    }
+    #gracias .nombre {
+      color: hsl(40, 80%, 55%);
+      font-size: 1.125rem;
+      font-weight: 500;
+    }
+    @keyframes floatIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrapper">
+    <p class="hotel-name">Hilton Niseko Village</p>
+
+    <div id="ticket-view">
+      <img id="ticket-img" src="ticket-cheers.png" alt="Ticket Brindis">
+      <p id="hint-text">Click the ticket to use it</p>
+      <p class="loading-msg" id="loading-msg">Processing…</p>
+      <div class="ticket-error" id="ticket-error"></div>
+    </div>
+
+    <div id="gracias">
+      <h1>Muchas<br>Gracias</h1>
+      <p class="nombre" id="nombre-display"></p>
+    </div>
+  </div>
+
+  <script>
+    // ─────────────────────────────────────────────────────────────────
+    // 🔧 CONFIGURACIÓN — Debe coincidir con el API_URL de index.html
+    // ─────────────────────────────────────────────────────────────────
+    const API_URL = "https://TU-PROYECTO.up.railway.app";
+
+    const params  = new URLSearchParams(window.location.search);
+    let nombre    = params.get("nombre");
+    let correo    = params.get("correo");
+    let room      = params.get("room");
+
+    // Modo demo si faltan parámetros
+    if (!nombre || !correo || !room) {
+      nombre = "Usuario Demo";
+      correo = "demo@local.com";
+      room   = "000";
+    }
+
+    // Al cargar, verificar si este ticket ya fue usado en la API
+    checkTicketStatus();
+
+    async function checkTicketStatus() {
+      try {
+        const res = await fetch(`${API_URL}/check-ticket?email=${encodeURIComponent(correo)}&nombre=${encodeURIComponent(nombre)}`);
+        const data = await res.json();
+        if (data.ticket_used) {
+          mostrarGracias();
+          bloquearBack();
+        }
+      } catch (err) {
+        console.warn("Could not verify ticket status:", err);
+      }
+    }
+
+    // ── Lógica de doble click ──
+    let confirmado = false;
+
+    document.getElementById("ticket-img").addEventListener("click", async function() {
+
+      // Primer click — confirmar intención
+      if (!confirmado) {
+        document.getElementById("hint-text").textContent = "Click again to confirm";
+        confirmado = true;
+        return;
+      }
+
+      // Segundo click — usar el ticket via API
+      const img = document.getElementById("ticket-img");
+      const loadingMsg = document.getElementById("loading-msg");
+      const errorEl   = document.getElementById("ticket-error");
+
+      img.style.pointerEvents = "none";
+      img.style.opacity = "0.6";
+      document.getElementById("hint-text").style.display = "none";
+      loadingMsg.style.display = "block";
+      errorEl.style.display = "none";
+
+      try {
+        const res = await fetch(`${API_URL}/use-ticket`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email: correo, nombre })
+        });
+
+        const data = await res.json();
+
+        if (res.ok && data.success) {
+          mostrarGracias();
+          bloquearBack();
+        } else if (res.status === 409) {
+          // Ya usado previamente
+          mostrarGracias();
+          bloquearBack();
+        } else {
+          throw new Error(data.error || "Error desconocido");
+        }
+
+      } catch (err) {
+        img.style.pointerEvents = "auto";
+        img.style.opacity = "1";
+        loadingMsg.style.display = "none";
+        document.getElementById("hint-text").style.display = "block";
+        errorEl.textContent = "Could not connect to server. Please try again.";
+        errorEl.style.display = "block";
+        confirmado = false;
+      }
+    });
+
+    // ── Funciones ──
+
+    function mostrarGracias() {
+      document.getElementById("ticket-view").style.display = "none";
+      const gracias = document.getElementById("gracias");
+      gracias.style.display = "block";
+      gracias.style.animation = "floatIn 0.6s ease-out";
+      document.getElementById("nombre-display").textContent = nombre;
+    }
+
+    function bloquearBack() {
+      history.pushState(null, null, location.href);
+      window.onpopstate = function () { history.go(1); };
+    }
+  </script>
+</body>
+</html>
