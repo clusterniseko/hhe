@@ -1,0 +1,577 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin — Hilton Niseko Village</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --navy:        hsl(220, 55%, 14%);
+      --navy-mid:    hsl(220, 45%, 18%);
+      --navy-border: hsl(220, 30%, 28%);
+      --gold:        hsl(40, 80%, 55%);
+      --gold-light:  hsl(40, 90%, 70%);
+      --gold-dim:    hsla(40, 80%, 55%, 0.15);
+      --cream:       hsl(40, 50%, 94%);
+      --muted:       hsl(220, 20%, 55%);
+      --green:       hsl(145, 55%, 42%);
+      --red:         hsl(0, 70%, 58%);
+    }
+
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: var(--navy);
+      color: var(--cream);
+      min-height: 100vh;
+      padding: 2rem 1rem 4rem;
+    }
+
+    /* ── Login screen ── */
+    #login-screen {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      padding: 1rem;
+    }
+
+    .login-card {
+      background: hsl(220, 45%, 18%);
+      border: 1px solid var(--navy-border);
+      border-radius: 18px;
+      padding: 2.5rem 2rem;
+      width: 100%;
+      max-width: 360px;
+      text-align: center;
+      animation: floatIn 0.5s ease-out;
+    }
+
+    .login-card .eyebrow {
+      font-size: 0.7rem;
+      letter-spacing: 0.3em;
+      text-transform: uppercase;
+      color: var(--gold);
+      margin-bottom: 0.5rem;
+    }
+
+    .login-card h1 {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.5rem;
+      margin-bottom: 2rem;
+      color: var(--cream);
+    }
+
+    .login-card input[type="password"] {
+      width: 100%;
+      height: 48px;
+      padding: 0 1rem;
+      border-radius: 10px;
+      border: 1px solid var(--navy-border);
+      background: hsl(220, 40%, 11%);
+      color: var(--cream);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 1rem;
+      outline: none;
+      margin-bottom: 1rem;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    .login-card input[type="password"]:focus {
+      border-color: var(--gold);
+      box-shadow: 0 0 0 3px var(--gold-dim);
+    }
+
+    .login-card button {
+      width: 100%;
+      height: 48px;
+      border: none;
+      border-radius: 10px;
+      background: linear-gradient(135deg, var(--gold), hsl(30, 90%, 45%));
+      color: var(--navy);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.95rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: opacity 0.2s;
+    }
+
+    .login-card button:hover { opacity: 0.9; }
+
+    .login-error {
+      color: var(--red);
+      font-size: 0.85rem;
+      margin-top: 0.75rem;
+      display: none;
+    }
+
+    /* ── Dashboard ── */
+    #dashboard { display: none; max-width: 1100px; margin: 0 auto; }
+
+    .top-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 1rem;
+      margin-bottom: 2rem;
+    }
+
+    .top-bar-left .eyebrow {
+      font-size: 0.7rem;
+      letter-spacing: 0.3em;
+      text-transform: uppercase;
+      color: var(--gold);
+      margin-bottom: 0.25rem;
+    }
+
+    .top-bar-left h1 {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.75rem;
+      color: var(--cream);
+    }
+
+    .top-bar-right {
+      display: flex;
+      gap: 0.75rem;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    /* ── Stats row ── */
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 1rem;
+      margin-bottom: 2rem;
+    }
+
+    .stat-card {
+      background: hsl(220, 45%, 18%);
+      border: 1px solid var(--navy-border);
+      border-radius: 14px;
+      padding: 1.25rem 1.5rem;
+    }
+
+    .stat-card .label {
+      font-size: 0.75rem;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-bottom: 0.4rem;
+    }
+
+    .stat-card .value {
+      font-size: 2rem;
+      font-weight: 600;
+      color: var(--cream);
+      line-height: 1;
+    }
+
+    .stat-card .value.gold { color: var(--gold); }
+    .stat-card .value.green { color: var(--green); }
+
+    /* ── Controls ── */
+    .controls {
+      display: flex;
+      gap: 0.75rem;
+      margin-bottom: 1.25rem;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .search-box {
+      flex: 1;
+      min-width: 200px;
+      height: 40px;
+      padding: 0 1rem;
+      border-radius: 8px;
+      border: 1px solid var(--navy-border);
+      background: hsl(220, 40%, 11%);
+      color: var(--cream);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.875rem;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    .search-box:focus { border-color: var(--gold); }
+    .search-box::placeholder { color: var(--muted); }
+
+    .filter-btn {
+      height: 40px;
+      padding: 0 1rem;
+      border-radius: 8px;
+      border: 1px solid var(--navy-border);
+      background: transparent;
+      color: var(--muted);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.8rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+      white-space: nowrap;
+    }
+
+    .filter-btn:hover, .filter-btn.active {
+      border-color: var(--gold);
+      color: var(--gold-light);
+      background: var(--gold-dim);
+    }
+
+    .btn-export {
+      height: 40px;
+      padding: 0 1.25rem;
+      border-radius: 8px;
+      border: none;
+      background: linear-gradient(135deg, var(--gold), hsl(30, 90%, 45%));
+      color: var(--navy);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.875rem;
+      font-weight: 600;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: opacity 0.2s;
+    }
+
+    .btn-export:hover { opacity: 0.9; }
+
+    .btn-logout {
+      height: 40px;
+      padding: 0 1.25rem;
+      border-radius: 8px;
+      border: 1px solid var(--navy-border);
+      background: transparent;
+      color: var(--muted);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.875rem;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .btn-logout:hover { border-color: var(--red); color: var(--red); }
+
+    /* ── Table ── */
+    .table-wrap {
+      background: hsl(220, 45%, 18%);
+      border: 1px solid var(--navy-border);
+      border-radius: 14px;
+      overflow: hidden;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.875rem;
+    }
+
+    thead tr {
+      background: hsl(220, 40%, 14%);
+      border-bottom: 1px solid var(--navy-border);
+    }
+
+    th {
+      padding: 0.85rem 1rem;
+      text-align: left;
+      font-size: 0.72rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--muted);
+      white-space: nowrap;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    th:hover { color: var(--gold-light); }
+    th.sorted { color: var(--gold); }
+
+    tbody tr {
+      border-bottom: 1px solid hsla(220, 30%, 28%, 0.5);
+      transition: background 0.15s;
+    }
+
+    tbody tr:last-child { border-bottom: none; }
+    tbody tr:hover { background: hsla(220, 40%, 22%, 0.6); }
+
+    td {
+      padding: 0.85rem 1rem;
+      color: var(--cream);
+      white-space: nowrap;
+    }
+
+    td.muted { color: var(--muted); font-size: 0.8rem; }
+
+    .badge {
+      display: inline-block;
+      padding: 0.2rem 0.6rem;
+      border-radius: 6px;
+      font-size: 0.75rem;
+      font-weight: 600;
+    }
+
+    .badge-used {
+      background: hsla(145, 55%, 42%, 0.15);
+      color: var(--green);
+      border: 1px solid hsla(145, 55%, 42%, 0.3);
+    }
+
+    .badge-pending {
+      background: hsla(40, 80%, 55%, 0.12);
+      color: var(--gold-light);
+      border: 1px solid hsla(40, 80%, 55%, 0.25);
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 3rem;
+      color: var(--muted);
+      font-size: 0.9rem;
+    }
+
+    .count-label {
+      font-size: 0.8rem;
+      color: var(--muted);
+      margin-bottom: 0.5rem;
+    }
+
+    @keyframes floatIn {
+      from { opacity: 0; transform: translateY(16px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ── Login ── -->
+  <div id="login-screen">
+    <div class="login-card">
+      <p class="eyebrow">Hilton Niseko Village</p>
+      <h1>Admin Panel</h1>
+      <input type="password" id="pwd-input" placeholder="Enter password" autofocus>
+      <button onclick="login()">Sign In</button>
+      <p class="login-error" id="login-error">Incorrect password. Try again.</p>
+    </div>
+  </div>
+
+  <!-- ── Dashboard ── -->
+  <div id="dashboard">
+    <div class="top-bar">
+      <div class="top-bar-left">
+        <p class="eyebrow">Hilton Niseko Village</p>
+        <h1>Registrations</h1>
+      </div>
+      <div class="top-bar-right">
+        <button class="btn-export" onclick="exportCSV()">Export CSV</button>
+        <button class="btn-logout" onclick="logout()">Sign out</button>
+      </div>
+    </div>
+
+    <div class="stats">
+      <div class="stat-card">
+        <p class="label">Total registered</p>
+        <p class="value gold" id="stat-total">—</p>
+      </div>
+      <div class="stat-card">
+        <p class="label">Tickets used</p>
+        <p class="value green" id="stat-used">—</p>
+      </div>
+      <div class="stat-card">
+        <p class="label">Tickets pending</p>
+        <p class="value" id="stat-pending">—</p>
+      </div>
+    </div>
+
+    <div class="controls">
+      <input class="search-box" type="text" id="search-input"
+        placeholder="Search by name, email, room…" oninput="renderTable()">
+      <button class="filter-btn active" id="filter-all"    onclick="setFilter('all')">All</button>
+      <button class="filter-btn"        id="filter-used"   onclick="setFilter('used')">Used</button>
+      <button class="filter-btn"        id="filter-pending" onclick="setFilter('pending')">Pending</button>
+    </div>
+
+    <p class="count-label" id="count-label"></p>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th onclick="sortBy('room')">Room</th>
+            <th onclick="sortBy('first_name')">First name</th>
+            <th onclick="sortBy('last_name')">Last name</th>
+            <th onclick="sortBy('email')">Email</th>
+            <th onclick="sortBy('phone')">Phone</th>
+            <th onclick="sortBy('country')">Country</th>
+            <th onclick="sortBy('lang')">Lang</th>
+            <th onclick="sortBy('ticket_used')">Ticket</th>
+            <th onclick="sortBy('created_at')">Registered at</th>
+          </tr>
+        </thead>
+        <tbody id="table-body"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <script>
+    // ─────────────────────────────────────────────────────────────────
+    // 🔧 CONFIGURACIÓN
+    // ─────────────────────────────────────────────────────────────────
+    const API_URL = "https://TU-PROYECTO.up.railway.app";
+
+    let allData    = [];
+    let activeFilter = "all";
+    let sortKey    = "created_at";
+    let sortAsc    = false;
+    let password   = "";
+
+    // ── Login ──────────────────────────────────────────────────────
+    document.getElementById("pwd-input").addEventListener("keydown", e => {
+      if (e.key === "Enter") login();
+    });
+
+    async function login() {
+      const pwd = document.getElementById("pwd-input").value.trim();
+      if (!pwd) return;
+
+      const res = await fetch(`${API_URL}/admin/registrations?password=${encodeURIComponent(pwd)}`);
+
+      if (res.status === 401) {
+        document.getElementById("login-error").style.display = "block";
+        document.getElementById("pwd-input").value = "";
+        document.getElementById("pwd-input").focus();
+        return;
+      }
+
+      if (!res.ok) {
+        document.getElementById("login-error").textContent = "Server error. Try again.";
+        document.getElementById("login-error").style.display = "block";
+        return;
+      }
+
+      password = pwd;
+      allData  = await res.json();
+
+      document.getElementById("login-screen").style.display  = "none";
+      document.getElementById("dashboard").style.display     = "block";
+
+      updateStats();
+      renderTable();
+    }
+
+    function logout() {
+      password = "";
+      allData  = [];
+      document.getElementById("login-screen").style.display = "flex";
+      document.getElementById("dashboard").style.display    = "none";
+      document.getElementById("pwd-input").value = "";
+      document.getElementById("login-error").style.display = "none";
+    }
+
+    // ── Stats ──────────────────────────────────────────────────────
+    function updateStats() {
+      const total   = allData.length;
+      const used    = allData.filter(r => r.ticket_used).length;
+      const pending = total - used;
+      document.getElementById("stat-total").textContent   = total;
+      document.getElementById("stat-used").textContent    = used;
+      document.getElementById("stat-pending").textContent = pending;
+    }
+
+    // ── Filter ─────────────────────────────────────────────────────
+    function setFilter(f) {
+      activeFilter = f;
+      ["all", "used", "pending"].forEach(id => {
+        document.getElementById("filter-" + id).classList.toggle("active", id === f);
+      });
+      renderTable();
+    }
+
+    // ── Sort ───────────────────────────────────────────────────────
+    function sortBy(key) {
+      if (sortKey === key) sortAsc = !sortAsc;
+      else { sortKey = key; sortAsc = true; }
+      document.querySelectorAll("th").forEach(th => th.classList.remove("sorted"));
+      event.target.classList.add("sorted");
+      renderTable();
+    }
+
+    // ── Render table ───────────────────────────────────────────────
+    function renderTable() {
+      const query = document.getElementById("search-input").value.toLowerCase();
+
+      let rows = allData.filter(r => {
+        if (activeFilter === "used"    && !r.ticket_used) return false;
+        if (activeFilter === "pending" &&  r.ticket_used) return false;
+        if (query) {
+          const haystack = [r.room, r.first_name, r.last_name, r.email, r.phone, r.country]
+            .join(" ").toLowerCase();
+          if (!haystack.includes(query)) return false;
+        }
+        return true;
+      });
+
+      rows.sort((a, b) => {
+        let va = a[sortKey] ?? "";
+        let vb = b[sortKey] ?? "";
+        if (typeof va === "number") return sortAsc ? va - vb : vb - va;
+        return sortAsc
+          ? String(va).localeCompare(String(vb))
+          : String(vb).localeCompare(String(va));
+      });
+
+      document.getElementById("count-label").textContent =
+        `Showing ${rows.length} of ${allData.length} registrations`;
+
+      const tbody = document.getElementById("table-body");
+
+      if (rows.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="9" class="empty-state">No registrations found.</td></tr>`;
+        return;
+      }
+
+      tbody.innerHTML = rows.map(r => {
+        const date = r.created_at
+          ? new Date(r.created_at).toLocaleString("en-US", { dateStyle: "medium", timeStyle: "short" })
+          : "—";
+        const badge = r.ticket_used
+          ? `<span class="badge badge-used">Used</span>`
+          : `<span class="badge badge-pending">Pending</span>`;
+        return `
+          <tr>
+            <td><strong>${r.room || "—"}</strong></td>
+            <td>${r.first_name || "—"}</td>
+            <td>${r.last_name  || "—"}</td>
+            <td class="muted">${r.email   || "—"}</td>
+            <td class="muted">${r.phone   || "—"}</td>
+            <td class="muted">${r.country || "—"}</td>
+            <td class="muted">${(r.lang || "").toUpperCase()}</td>
+            <td>${badge}</td>
+            <td class="muted">${date}</td>
+          </tr>`;
+      }).join("");
+    }
+
+    // ── Export CSV ─────────────────────────────────────────────────
+    function exportCSV() {
+      const headers = ["Room","First name","Last name","Email","Phone","Country","ZIP","Lang","Ticket used","Registered at"];
+      const rows = allData.map(r => [
+        r.room, r.first_name, r.last_name, r.email,
+        r.phone, r.country, r.zip, r.lang,
+        r.ticket_used ? "Yes" : "No",
+        r.created_at || ""
+      ].map(v => `"${String(v ?? "").replace(/"/g, '""')}"`).join(","));
+
+      const csv  = [headers.join(","), ...rows].join("\n");
+      const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+      const url  = URL.createObjectURL(blob);
+      const a    = document.createElement("a");
+      a.href     = url;
+      a.download = `hilton-niseko-registrations-${new Date().toISOString().slice(0,10)}.csv`;
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+  </script>
+</body>
+</html>

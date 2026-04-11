@@ -7,7 +7,7 @@ app = Flask(__name__)
 # ── CORS: permite llamadas desde GitHub Pages ──────────────────────────
 # Cambia el origen por tu URL real de GitHub Pages
 # Ejemplo: "https://tuusuario.github.io"
-CORS(app, origins=["https://yenryortega.github.io", "http://localhost"])
+CORS(app, origins=["https://TU-USUARIO.github.io", "http://localhost"])
 
 DB = "registrations.db"
 
@@ -136,7 +136,7 @@ def use_ticket():
 
 
 # ── GET /registrations ─────────────────────────────────────────────────
-# Panel de administración — lista todos los registros
+# Endpoint interno sin protección (para debug en Railway)
 @app.route("/registrations", methods=["GET"])
 def list_all():
     with get_db() as con:
@@ -145,7 +145,25 @@ def list_all():
                       country, zip, lang, ticket_used, created_at
                FROM registrations ORDER BY created_at DESC"""
         ).fetchall()
+    return jsonify([dict(r) for r in rows])
 
+
+# ── GET /admin/registrations ───────────────────────────────────────────
+# Usado por admin.html — protegido por contraseña
+# Configura la contraseña en Railway: Settings → Variables → ADMIN_PASSWORD
+# Si no defines la variable, la contraseña por defecto es "hilton2025"
+@app.route("/admin/registrations", methods=["GET"])
+def admin_registrations():
+    ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD", "hilton2025")
+    password = request.args.get("password", "")
+    if password != ADMIN_PASSWORD:
+        return jsonify({"error": "unauthorized"}), 401
+    with get_db() as con:
+        rows = con.execute(
+            """SELECT room, first_name, last_name, email, phone,
+                      country, zip, lang, ticket_used, created_at
+               FROM registrations ORDER BY created_at DESC"""
+        ).fetchall()
     return jsonify([dict(r) for r in rows])
 
 
