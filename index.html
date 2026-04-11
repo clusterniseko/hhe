@@ -282,12 +282,12 @@
 
     <!-- Language Switcher -->
     <div class="lang-switcher">
-      <button class="lang-btn active" onclick="setLang('en')">EN</button>
-      <button class="lang-btn" onclick="setLang('ja')">日本語</button>
-      <button class="lang-btn" onclick="setLang('ko')">한국어</button>
-      <button class="lang-btn" onclick="setLang('zh')">中文</button>
-      <button class="lang-btn" onclick="setLang('fr')">FR</button>
-      <button class="lang-btn" onclick="setLang('es')">ES</button>
+      <button class="lang-btn active" data-lang="en" onclick="setLang('en')">EN</button>
+      <button class="lang-btn" data-lang="ja" onclick="setLang('ja')">日本語</button>
+      <button class="lang-btn" data-lang="ko" onclick="setLang('ko')">한국어</button>
+      <button class="lang-btn" data-lang="zh" onclick="setLang('zh')">中文</button>
+      <button class="lang-btn" data-lang="fr" onclick="setLang('fr')">FR</button>
+      <button class="lang-btn" data-lang="es" onclick="setLang('es')">ES</button>
     </div>
 
     <div class="header">
@@ -563,7 +563,7 @@
         el.textContent = t[key];
       });
       document.querySelectorAll('.lang-btn').forEach(btn => {
-        btn.classList.toggle('active', btn.getAttribute('onclick') === `setLang('${lang}')`);
+      btn.classList.toggle('active', btn.getAttribute('data-lang') === lang);
       });
       document.documentElement.lang = lang;
     }
