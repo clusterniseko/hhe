@@ -375,7 +375,7 @@
     // 🔧 CONFIGURACIÓN — Cambia esta URL por la de tu proyecto Railway
     //    Ejemplo: "https://hilton-niseko-api.up.railway.app"
     // ─────────────────────────────────────────────────────────────────
-    const API_URL = "https://web-production-49175e.up.railway.app/";
+    const API_URL = "https://web-production-49175e.up.railway.app";
 
     const translations = {
       en: {
@@ -562,6 +562,27 @@
       });
       document.documentElement.lang = lang;
     }
+
+
+    // ── Latin-only input filter ────────────────────────────────────────
+    // Allows: a-z, A-Z, accented/diacritic latin chars, spaces, hyphens, apostrophes
+    const LATIN_REGEX = /^[\p{Script=Latin}\s\-\''.]*$/u;
+
+    function enforceLatin(input) {
+      input.addEventListener("input", function () {
+        const val = this.value;
+        if (!LATIN_REGEX.test(val)) {
+          // Remove any non-latin character typed
+          this.value = [...val].filter(ch => LATIN_REGEX.test(ch)).join("");
+          this.style.borderColor = "var(--error)";
+          setTimeout(() => this.style.borderColor = "", 600);
+        }
+      });
+    }
+
+    enforceLatin(document.getElementById("firstName"));
+    enforceLatin(document.getElementById("lastName"));
+    enforceLatin(document.getElementById("country"));
 
     document.getElementById("ticketForm").addEventListener("submit", async function(e) {
       e.preventDefault();

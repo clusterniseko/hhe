@@ -404,6 +404,7 @@
             <th onclick="sortBy('email')">Email</th>
             <th onclick="sortBy('phone')">Phone</th>
             <th onclick="sortBy('country')">Country</th>
+            <th onclick="sortBy('zip')">ZIP</th>
             <th onclick="sortBy('lang')">Lang</th>
             <th onclick="sortBy('ticket_used')">Ticket</th>
             <th onclick="sortBy('created_at')">Registered at</th>
@@ -527,7 +528,7 @@
       const tbody = document.getElementById("table-body");
 
       if (rows.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="9" class="empty-state">No registrations found.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="10" class="empty-state">No registrations found.</td></tr>`;
         return;
       }
 
@@ -546,6 +547,7 @@
             <td class="muted">${r.email   || "—"}</td>
             <td class="muted">${r.phone   || "—"}</td>
             <td class="muted">${r.country || "—"}</td>
+            <td class="muted">${r.zip     || "—"}</td>
             <td class="muted">${(r.lang || "").toUpperCase()}</td>
             <td>${badge}</td>
             <td class="muted">${date}</td>
