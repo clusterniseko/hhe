@@ -7,6 +7,19 @@ app = Flask(__name__)
 # ── CORS: permite llamadas desde GitHub Pages ──────────────────────────
 CORS(app, resources={r"/*": {"origins": "*"}})
 
+# ── Garantiza headers CORS incluso en respuestas de error (401, 404…) ──
+@app.after_request
+def add_cors_headers(response):
+    response.headers["Access-Control-Allow-Origin"]  = "*"
+    response.headers["Access-Control-Allow-Headers"] = "Content-Type, Authorization"
+    response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, OPTIONS"
+    return response
+
+@app.route("/", defaults={"path": ""}, methods=["OPTIONS"])
+@app.route("/<path:path>", methods=["OPTIONS"])
+def handle_options(path):
+    return "", 204
+
 # ── Conexión a PostgreSQL ──────────────────────────────────────────────
 DATABASE_URL = os.environ.get("DATABASE_URL", "")
 
