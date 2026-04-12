@@ -10,6 +10,9 @@ CORS(app, origins=["https://clusterniseko.github.io", "http://localhost"])
 # ── Conexión a PostgreSQL ──────────────────────────────────────────────
 DATABASE_URL = os.environ.get("DATABASE_URL", "")
 
+# ── Contraseña admin (definida UNA sola vez) ───────────────────────────
+ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD", "HILTON2026")
+
 
 def get_db():
     con = psycopg2.connect(DATABASE_URL)
@@ -252,7 +255,6 @@ def list_all():
 # ── GET /admin/registrations ───────────────────────────────────────────
 @app.route("/admin/registrations", methods=["GET"])
 def admin_registrations():
-    ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD", "hilton2025")
     if request.args.get("password", "") != ADMIN_PASSWORD:
         return jsonify({"error": "unauthorized"}), 401
 
@@ -270,7 +272,6 @@ def admin_registrations():
 # ── DELETE /admin/delete ──────────────────────────────────────────────
 @app.route("/admin/delete", methods=["DELETE"])
 def admin_delete():
-    ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD", "HILTON2026")
     if request.args.get("password", "") != ADMIN_PASSWORD:
         return jsonify({"error": "unauthorized"}), 401
 
