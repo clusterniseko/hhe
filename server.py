@@ -5,13 +5,7 @@ import psycopg2, psycopg2.extras, os
 app = Flask(__name__)
 
 # ── CORS: permite llamadas desde GitHub Pages ──────────────────────────
-CORS(app, resources={
-    r"/*": {
-        "origins": ["https://clusterniseko.github.io", "http://localhost", "http://127.0.0.1"],
-        "methods": ["GET", "POST", "DELETE", "OPTIONS"],
-        "allow_headers": ["Content-Type", "Authorization"]
-    }
-})
+CORS(app, resources={r"/*": {"origins": "*"}})
 
 # ── Conexión a PostgreSQL ──────────────────────────────────────────────
 DATABASE_URL = os.environ.get("DATABASE_URL", "")
