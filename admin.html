@@ -337,6 +337,180 @@
       margin-bottom: 0.5rem;
     }
 
+
+    /* ── Delete button in rows ── */
+    .btn-delete-row {
+      height: 28px;
+      padding: 0 0.6rem;
+      border-radius: 6px;
+      border: 1px solid hsla(0, 70%, 58%, 0.35);
+      background: transparent;
+      color: var(--red);
+      font-size: 0.75rem;
+      cursor: pointer;
+      transition: all 0.2s;
+      white-space: nowrap;
+    }
+    .btn-delete-row:hover {
+      background: hsla(0, 70%, 58%, 0.12);
+      border-color: var(--red);
+    }
+
+    /* ── Trash view toggle button ── */
+    .btn-trash {
+      height: 40px;
+      padding: 0 1.25rem;
+      border-radius: 8px;
+      border: 1px solid var(--navy-border);
+      background: transparent;
+      color: var(--muted);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.875rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      transition: all 0.2s;
+      position: relative;
+    }
+    .btn-trash:hover { border-color: var(--red); color: var(--red); }
+    .btn-trash.has-items { border-color: hsla(0,70%,58%,0.4); color: var(--red); }
+    .trash-count {
+      background: var(--red);
+      color: #fff;
+      border-radius: 10px;
+      font-size: 0.65rem;
+      font-weight: 700;
+      padding: 0.1rem 0.4rem;
+      min-width: 18px;
+      text-align: center;
+      display: none;
+    }
+    .btn-trash.has-items .trash-count { display: inline-block; }
+
+    /* ── Trash panel ── */
+    #trash-panel {
+      display: none;
+      margin-top: 2rem;
+    }
+    .trash-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 1rem;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+    }
+    .trash-header h2 {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.25rem;
+      color: var(--red);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .btn-empty-trash {
+      height: 36px;
+      padding: 0 1rem;
+      border-radius: 8px;
+      border: 1px solid hsla(0,70%,58%,0.4);
+      background: transparent;
+      color: var(--red);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.8rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .btn-empty-trash:hover { background: hsla(0,70%,58%,0.12); }
+    .btn-restore-row {
+      height: 28px;
+      padding: 0 0.6rem;
+      border-radius: 6px;
+      border: 1px solid hsla(145, 55%, 42%, 0.35);
+      background: transparent;
+      color: var(--green);
+      font-size: 0.75rem;
+      cursor: pointer;
+      transition: all 0.2s;
+      margin-right: 0.4rem;
+    }
+    .btn-restore-row:hover { background: hsla(145,55%,42%,0.12); }
+    .btn-perm-delete-row {
+      height: 28px;
+      padding: 0 0.6rem;
+      border-radius: 6px;
+      border: 1px solid hsla(0,70%,58%,0.35);
+      background: transparent;
+      color: var(--red);
+      font-size: 0.75rem;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .btn-perm-delete-row:hover { background: hsla(0,70%,58%,0.12); }
+
+    /* ── Confirm modal ── */
+    .modal-backdrop {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: hsla(220, 55%, 6%, 0.75);
+      z-index: 100;
+      align-items: center;
+      justify-content: center;
+      padding: 1rem;
+    }
+    .modal-backdrop.open { display: flex; }
+    .modal {
+      background: hsl(220, 45%, 18%);
+      border: 1px solid var(--navy-border);
+      border-radius: 16px;
+      padding: 2rem;
+      max-width: 380px;
+      width: 100%;
+      text-align: center;
+      animation: floatIn 0.25s ease-out;
+    }
+    .modal h3 {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.2rem;
+      color: var(--cream);
+      margin-bottom: 0.5rem;
+    }
+    .modal p {
+      font-size: 0.875rem;
+      color: var(--muted);
+      margin-bottom: 1.5rem;
+      line-height: 1.6;
+    }
+    .modal-actions {
+      display: flex;
+      gap: 0.75rem;
+      justify-content: center;
+    }
+    .modal-actions button {
+      height: 40px;
+      padding: 0 1.5rem;
+      border-radius: 8px;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.875rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: opacity 0.2s;
+    }
+    .btn-cancel-modal {
+      border: 1px solid var(--navy-border);
+      background: transparent;
+      color: var(--muted);
+    }
+    .btn-cancel-modal:hover { color: var(--cream); }
+    .btn-confirm-modal {
+      border: none;
+      background: var(--red);
+      color: #fff;
+    }
+    .btn-confirm-modal:hover { opacity: 0.85; }
+
     @keyframes floatIn {
       from { opacity: 0; transform: translateY(16px); }
       to   { opacity: 1; transform: translateY(0); }
@@ -364,6 +538,9 @@
         <h1>Registrations</h1>
       </div>
       <div class="top-bar-right">
+        <button class="btn-trash" id="btn-trash" onclick="toggleTrash()">
+          &#128465; Trash <span class="trash-count" id="trash-count">0</span>
+        </button>
         <button class="btn-export" onclick="exportCSV()">Export CSV</button>
         <button class="btn-logout" onclick="logout()">Sign out</button>
       </div>
@@ -408,10 +585,48 @@
             <th onclick="sortBy('lang')">Lang</th>
             <th onclick="sortBy('ticket_used')">Ticket</th>
             <th onclick="sortBy('created_at')">Registered at</th>
+            <th></th>
           </tr>
         </thead>
         <tbody id="table-body"></tbody>
       </table>
+    </div>
+  </div>
+
+
+  <!-- ── Trash panel ── -->
+  <div id="trash-panel">
+    <div class="trash-header">
+      <h2>&#128465; Trash</h2>
+      <button class="btn-empty-trash" onclick="confirmEmptyTrash()">Delete all permanently</button>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Room</th>
+            <th>First name</th>
+            <th>Last name</th>
+            <th>Email</th>
+            <th>Country</th>
+            <th>Deleted at</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="trash-body"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ── Confirm modal ── -->
+  <div class="modal-backdrop" id="modal-backdrop">
+    <div class="modal">
+      <h3 id="modal-title">Are you sure?</h3>
+      <p id="modal-msg">This action cannot be undone.</p>
+      <div class="modal-actions">
+        <button class="btn-cancel-modal" onclick="closeModal()">Cancel</button>
+        <button class="btn-confirm-modal" id="modal-confirm-btn" onclick="modalConfirmAction()">Delete</button>
+      </div>
     </div>
   </div>
 
@@ -421,11 +636,14 @@
     // ─────────────────────────────────────────────────────────────────
     const API_URL = "https://web-production-49175e.up.railway.app";
 
-    let allData    = [];
+    let allData      = [];
+    let trashData    = [];   // soft-deleted records (session only)
     let activeFilter = "all";
-    let sortKey    = "created_at";
-    let sortAsc    = false;
-    let password   = "";
+    let sortKey      = "created_at";
+    let sortAsc      = false;
+    let password     = "";
+    let trashVisible = false;
+    let modalAction  = null; // pending confirm callback
 
     // ── Login ──────────────────────────────────────────────────────
     document.getElementById("pwd-input").addEventListener("keydown", e => {
@@ -528,7 +746,7 @@
       const tbody = document.getElementById("table-body");
 
       if (rows.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="10" class="empty-state">No registrations found.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="11" class="empty-state">No registrations found.</td></tr>`;
         return;
       }
 
@@ -551,9 +769,127 @@
             <td class="muted">${(r.lang || "").toUpperCase()}</td>
             <td>${badge}</td>
             <td class="muted">${date}</td>
+            <td><button class="btn-delete-row" onclick="softDelete('${r.email}')">&#128465; Delete</button></td>
           </tr>`;
       }).join("");
     }
+
+
+    // ── Soft delete ────────────────────────────────────────────────
+    function softDelete(email) {
+      const idx = allData.findIndex(r => r.email === email);
+      if (idx === -1) return;
+      const record = Object.assign({}, allData[idx], { deleted_at: new Date().toISOString() });
+      trashData.unshift(record);
+      allData.splice(idx, 1);
+      updateStats();
+      renderTable();
+      renderTrash();
+      updateTrashBtn();
+    }
+
+    function restoreRecord(email) {
+      const idx = trashData.findIndex(r => r.email === email);
+      if (idx === -1) return;
+      const record = Object.assign({}, trashData[idx]);
+      delete record.deleted_at;
+      allData.unshift(record);
+      trashData.splice(idx, 1);
+      updateStats();
+      renderTable();
+      renderTrash();
+      updateTrashBtn();
+    }
+
+    function permDelete(email) {
+      openModal(
+        "Delete permanently?",
+        "This record will be removed from the trash and cannot be recovered.",
+        () => {
+          trashData = trashData.filter(r => r.email !== email);
+          renderTrash();
+          updateTrashBtn();
+        }
+      );
+    }
+
+    function confirmEmptyTrash() {
+      if (trashData.length === 0) return;
+      openModal(
+        "Empty trash?",
+        `This will permanently delete all ${trashData.length} record(s) in the trash. This cannot be undone.`,
+        () => {
+          trashData = [];
+          renderTrash();
+          updateTrashBtn();
+        }
+      );
+    }
+
+    // ── Trash panel ────────────────────────────────────────────────
+    function toggleTrash() {
+      trashVisible = !trashVisible;
+      document.getElementById("trash-panel").style.display = trashVisible ? "block" : "none";
+      document.getElementById("btn-trash").style.borderColor = trashVisible ? "var(--red)" : "";
+      document.getElementById("btn-trash").style.color = trashVisible ? "var(--red)" : "";
+      if (trashVisible) renderTrash();
+    }
+
+    function renderTrash() {
+      const tbody = document.getElementById("trash-body");
+      if (trashData.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="7" class="empty-state">Trash is empty.</td></tr>`;
+        return;
+      }
+      tbody.innerHTML = trashData.map(r => {
+        const delDate = r.deleted_at
+          ? new Date(r.deleted_at).toLocaleString("en-US", { dateStyle: "medium", timeStyle: "short" })
+          : "—";
+        return `
+          <tr>
+            <td><strong>${r.room || "—"}</strong></td>
+            <td>${r.first_name || "—"}</td>
+            <td>${r.last_name  || "—"}</td>
+            <td class="muted">${r.email   || "—"}</td>
+            <td class="muted">${r.country || "—"}</td>
+            <td class="muted">${delDate}</td>
+            <td>
+              <button class="btn-restore-row" onclick="restoreRecord('${r.email}')">&#8635; Restore</button>
+              <button class="btn-perm-delete-row" onclick="permDelete('${r.email}')">&#128465; Delete</button>
+            </td>
+          </tr>`;
+      }).join("");
+    }
+
+    function updateTrashBtn() {
+      const btn   = document.getElementById("btn-trash");
+      const badge = document.getElementById("trash-count");
+      badge.textContent = trashData.length;
+      btn.classList.toggle("has-items", trashData.length > 0);
+    }
+
+    // ── Confirm modal ───────────────────────────────────────────────
+    function openModal(title, msg, onConfirm) {
+      document.getElementById("modal-title").textContent = title;
+      document.getElementById("modal-msg").textContent   = msg;
+      modalAction = onConfirm;
+      document.getElementById("modal-backdrop").classList.add("open");
+    }
+
+    function closeModal() {
+      modalAction = null;
+      document.getElementById("modal-backdrop").classList.remove("open");
+    }
+
+    function modalConfirmAction() {
+      if (modalAction) modalAction();
+      closeModal();
+    }
+
+    // Close modal on backdrop click
+    document.getElementById("modal-backdrop").addEventListener("click", function(e) {
+      if (e.target === this) closeModal();
+    });
 
     // ── Export CSV ─────────────────────────────────────────────────
     function exportCSV() {

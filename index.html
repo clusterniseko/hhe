@@ -286,8 +286,6 @@
       <button class="lang-btn" data-lang="ja" onclick="setLang('ja')">日本語</button>
       <button class="lang-btn" data-lang="ko" onclick="setLang('ko')">한국어</button>
       <button class="lang-btn" data-lang="zh" onclick="setLang('zh')">中文</button>
-      <button class="lang-btn" data-lang="fr" onclick="setLang('fr')">FR</button>
-      <button class="lang-btn" data-lang="es" onclick="setLang('es')">ES</button>
     </div>
 
     <div class="header">
@@ -312,12 +310,10 @@
           <div>
             <label><span data-i18n="firstName">First Name</span> <span class="req" data-i18n="required">(Required)</span></label>
             <input type="text" id="firstName" required>
-            <p class="sub-label" data-i18n="first">First</p>
           </div>
           <div>
             <label><span data-i18n="lastName">Last Name</span> <span class="req" data-i18n="required">(Required)</span></label>
             <input type="text" id="lastName" required>
-            <p class="sub-label" data-i18n="last">Last</p>
           </div>
         </div>
 
@@ -385,8 +381,6 @@
         required: "(Required)",
         firstName: "First Name",
         lastName: "Last Name",
-        first: "First",
-        last: "Last",
         phone: "Phone",
         email: "Email",
         country: "Country / Region",
@@ -407,17 +401,15 @@
         submitting: "Submitting…",
       },
       ja: {
-        title: "ヒルトン・オナーズに登録",
-        subtitle: "任意と記載のない項目はすべて必須です。",
+        title: "ヒルトン・オナーズへのご入会",
+        subtitle: "特に記載のない限り、すべての項目は必須です。",
         room: "部屋番号",
         required: "（必須）",
-        firstName: "名",
-        lastName: "姓",
-        first: "名",
-        last: "姓",
-        phone: "電話番号",
+        lastName: "名　（半角ローマ字）",
+        firstName: "姓　（半角ローマ字）",
+        phone: "携帯電話番号",
         email: "メールアドレス",
-        country: "国 / 地域",
+        country: "国 / 地域　（半角ローマ字）",
         zip: "郵便番号",
         submit: "送信",
         privacyText: "送信をクリックすることで、",
@@ -435,25 +427,23 @@
         submitting: "送信中…",
       },
       ko: {
-        title: "힐튼 아너스 가입",
+        title: "힐튼 Honors에 가입하세요",
         subtitle: "선택 사항으로 표시되지 않은 모든 항목은 필수입니다.",
         room: "객실 번호",
         required: "(필수)",
-        firstName: "이름",
-        lastName: "성",
-        first: "이름",
-        last: "성",
-        phone: "전화번호",
+        firstName: "성 (영문)",
+        lastName: "이름 (영문)",
+        phone: "휴대폰 번호",
         email: "이메일",
-        country: "국가 / 지역",
+        country: "국가 / 지역　(영문)",
         zip: "우편번호",
         submit: "제출",
         privacyText: "제출을 클릭하면",
-        privacyTerms: "힐튼 아너스 프로그램 이용약관",
+        privacyTerms: "힐튼 Honors에 프로그램 이용약관",
         privacyAnd: "에 동의하고,",
         privacyPolicy: "힐튼 글로벌 개인정보 처리방침",
         privacyOffers: "에 명시된 정보의 수집, 사용, 공유 및 전송에 동의합니다. 또한 힐튼으로부터 이메일 및 직접 우편을 통한 특별 혜택 및 프로모션 수신에 동의합니다.",
-        privacyUnsubscribe: "힐튼 아너스 프로필에서 구독 설정을 변경하여 혜택 및 프로모션 수신을 거부할 수 있음을 이해합니다.",
+        privacyUnsubscribe: "힐튼 Honors에 프로필에서 구독 설정을 변경하여 혜택 및 프로모션 수신을 거부할 수 있음을 이해합니다.",
         privacyCalifornia: "캘리포니아 소비자 안내",
         privacyCaliforniaEnd: "힐튼의 개인정보 수집 및 이용에 관하여.",
         errorRequired: "모든 필수 항목을 입력해 주세요.",
@@ -464,16 +454,14 @@
       },
       zh: {
         title: "加入希尔顿荣誉客会",
-        subtitle: "除标注为可选的字段外，所有字段均为必填项。",
+        subtitle: "除非为可选项，否则所有字段为必填项。",
         room: "房间号",
         required: "（必填）",
-        firstName: "名字",
-        lastName: "姓氏",
-        first: "名",
-        last: "姓",
+        firstName: "名字（半角罗马字）",
+        lastName: "姓氏（半角罗马字）",
         phone: "电话号码",
         email: "电子邮箱",
-        country: "国家 / 地区",
+        country: "国家 / 地区（半角罗马字）",
         zip: "邮政编码",
         submit: "提交",
         privacyText: "点击提交即表示我同意",
@@ -497,8 +485,6 @@
         required: "(Obligatoire)",
         firstName: "Prénom",
         lastName: "Nom de famille",
-        first: "Prénom",
-        last: "Nom",
         phone: "Téléphone",
         email: "Adresse e-mail",
         country: "Pays / Région",
@@ -525,8 +511,6 @@
         required: "(Requerido)",
         firstName: "Nombre",
         lastName: "Apellido",
-        first: "Nombre",
-        last: "Apellido",
         phone: "Teléfono",
         email: "Correo electrónico",
         country: "País / Región",
