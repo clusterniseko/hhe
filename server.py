@@ -270,7 +270,7 @@ def admin_registrations():
 # ── DELETE /admin/delete ──────────────────────────────────────────────
 @app.route("/admin/delete", methods=["DELETE"])
 def admin_delete():
-    ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD", "hilton2025")
+    ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD", "HILTON2026")
     if request.args.get("password", "") != ADMIN_PASSWORD:
         return jsonify({"error": "unauthorized"}), 401
 
