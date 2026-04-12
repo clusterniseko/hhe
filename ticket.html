@@ -135,14 +135,39 @@
       room   = "000";
     }
 
-    // Al cargar, verificar si este ticket ya fue usado (por email + nombre, no por habitación)
-    checkTicketStatus();
+    // ── localStorage helpers ──────────────────────────────────────────
+    function getUsedTickets() {
+      try { return JSON.parse(localStorage.getItem("hnv_used_tickets") || "[]"); }
+      catch { return []; }
+    }
+    function markTicketUsed(name, email) {
+      const list = getUsedTickets();
+      list.push({ name: name.toLowerCase(), email: email.toLowerCase() });
+      localStorage.setItem("hnv_used_tickets", JSON.stringify(list));
+    }
+    function isTicketAlreadyUsed(name, email) {
+      const list = getUsedTickets();
+      const lowerName  = name.toLowerCase();
+      const lowerEmail = email.toLowerCase();
+      // Block if EITHER name OR email was already used
+      return list.some(r => r.name === lowerName || r.email === lowerEmail);
+    }
 
-    async function checkTicketStatus() {
+    // Al cargar, verificar si este ticket ya fue usado (localStorage primero)
+    if (isTicketAlreadyUsed(nombre, correo)) {
+      mostrarGracias();
+      bloquearBack();
+    } else {
+      // También verificar con el servidor como respaldo
+      checkTicketStatusServer();
+    }
+
+    async function checkTicketStatusServer() {
       try {
         const res = await fetch(`${API_URL}/check-ticket?email=${encodeURIComponent(correo)}&nombre=${encodeURIComponent(nombre)}`);
         const data = await res.json();
         if (data.ticket_used) {
+          markTicketUsed(nombre, correo);
           mostrarGracias();
           bloquearBack();
         }
@@ -163,7 +188,7 @@
         return;
       }
 
-      // Segundo click — usar el ticket via API
+      // Segundo click — usar el ticket
       const img = document.getElementById("ticket-img");
       const loadingMsg = document.getElementById("loading-msg");
       const errorEl   = document.getElementById("ticket-error");
@@ -173,6 +198,14 @@
       document.getElementById("hint-text").style.display = "none";
       loadingMsg.style.display = "block";
       errorEl.style.display = "none";
+
+      // Check localStorage again before server call (race condition guard)
+      if (isTicketAlreadyUsed(nombre, correo)) {
+        markTicketUsed(nombre, correo);
+        mostrarGracias();
+        bloquearBack();
+        return;
+      }
 
       try {
         const res = await fetch(`${API_URL}/use-ticket`, {
@@ -184,10 +217,12 @@
         const data = await res.json();
 
         if (res.ok && data.success) {
+          markTicketUsed(nombre, correo);
           mostrarGracias();
           bloquearBack();
         } else if (res.status === 409) {
-          // Ya usado previamente
+          // Ya usado en el servidor
+          markTicketUsed(nombre, correo);
           mostrarGracias();
           bloquearBack();
         } else {

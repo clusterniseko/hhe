@@ -395,6 +395,8 @@
         privacyCalifornia: "California Consumers, learn about",
         privacyCaliforniaEnd: "Hilton's collection and use of your personal information.",
         errorRequired: "Please complete all required fields.",
+        errorUsedName: "This name has already been registered.",
+        errorUsedEmail: "This email address has already been registered.",
         errorUsed: "This name and email have already been registered.",
         errorServer: "Server error. Please try again.",
         errorOffline: "Could not reach server. Please check your connection.",
@@ -421,6 +423,8 @@
         privacyCalifornia: "カリフォルニア州の消費者の方はこちら",
         privacyCaliforniaEnd: "Hiltonによる個人情報の収集と利用について。",
         errorRequired: "すべての必須項目を入力してください。",
+        errorUsedName: "この氏名はすでに登録済みです。",
+        errorUsedEmail: "このメールアドレスはすでに登録済みです。",
         errorUsed: "この氏名とメールアドレスはすでに登録済みです。",
         errorServer: "サーバーエラーが発生しました。もう一度お試しください。",
         errorOffline: "サーバーに接続できません。接続を確認してください。",
@@ -447,6 +451,8 @@
         privacyCalifornia: "캘리포니아 소비자 안내",
         privacyCaliforniaEnd: "힐튼의 개인정보 수집 및 이용에 관하여.",
         errorRequired: "모든 필수 항목을 입력해 주세요.",
+        errorUsedName: "이 이름은 이미 등록되었습니다.",
+        errorUsedEmail: "이 이메일은 이미 등록되었습니다.",
         errorUsed: "이 이름과 이메일은 이미 등록되었습니다.",
         errorServer: "서버 오류가 발생했습니다. 다시 시도해 주세요.",
         errorOffline: "서버에 연결할 수 없습니다. 연결을 확인하세요.",
@@ -473,6 +479,8 @@
         privacyCalifornia: "加利福尼亚州消费者，了解",
         privacyCaliforniaEnd: "希尔顿对您个人信息的收集和使用。",
         errorRequired: "请填写所有必填字段。",
+        errorUsedName: "该姓名已被注册。",
+        errorUsedEmail: "该电子邮箱已被注册。",
         errorUsed: "该姓名和电子邮箱已被注册。",
         errorServer: "服务器错误，请重试。",
         errorOffline: "无法连接到服务器，请检查您的网络连接。",
@@ -499,6 +507,8 @@
         privacyCalifornia: "Consommateurs californiens, renseignez-vous sur",
         privacyCaliforniaEnd: "la collecte et l'utilisation de vos informations personnelles par Hilton.",
         errorRequired: "Veuillez remplir tous les champs obligatoires.",
+        errorUsedName: "Ce nom a déjà été enregistré.",
+        errorUsedEmail: "Cette adresse e-mail a déjà été enregistrée.",
         errorUsed: "Ce nom et cet e-mail ont déjà été enregistrés.",
         errorServer: "Erreur serveur. Veuillez réessayer.",
         errorOffline: "Impossible de contacter le serveur. Vérifiez votre connexion.",
@@ -525,6 +535,8 @@
         privacyCalifornia: "Consumidores de California, conozca",
         privacyCaliforniaEnd: "la recopilación y el uso de su información personal por parte de Hilton.",
         errorRequired: "Por favor, completa todos los campos requeridos.",
+        errorUsedName: "Este nombre ya ha sido registrado.",
+        errorUsedEmail: "Este correo electrónico ya ha sido registrado.",
         errorUsed: "Este nombre y correo electrónico ya han sido registrados.",
         errorServer: "Error del servidor. Por favor, inténtalo de nuevo.",
         errorOffline: "No se puede conectar al servidor. Verifica tu conexión.",
@@ -573,6 +585,25 @@
     enforceLatin(document.getElementById("lastName"));
     enforceLatin(document.getElementById("country"));
 
+    // ── localStorage helpers ───────────────────────────────────────────
+    function getRegistrations() {
+      try { return JSON.parse(localStorage.getItem("hnv_registrations") || "[]"); }
+      catch { return []; }
+    }
+    function saveRegistration(firstName, lastName, email) {
+      const list = getRegistrations();
+      list.push({ name: (firstName + " " + lastName).toLowerCase(), email: email.toLowerCase() });
+      localStorage.setItem("hnv_registrations", JSON.stringify(list));
+    }
+    function checkDuplicate(firstName, lastName, email) {
+      const fullName = (firstName + " " + lastName).toLowerCase();
+      const lowerEmail = email.toLowerCase();
+      const list = getRegistrations();
+      const nameTaken  = list.some(r => r.name  === fullName);
+      const emailTaken = list.some(r => r.email === lowerEmail);
+      return { nameTaken, emailTaken };
+    }
+
     document.getElementById("ticketForm").addEventListener("submit", async function(e) {
       e.preventDefault();
       const t = translations[currentLang];
@@ -595,6 +626,27 @@
         return;
       }
 
+      // ── Dual duplicate check (localStorage) ──────────────────────────
+      const { nameTaken, emailTaken } = checkDuplicate(firstName, lastName, correo);
+      if (nameTaken && emailTaken) {
+        errorEl.textContent = t.errorUsed;
+        errorEl.style.display = "block";
+        window.scrollTo({ top: 0, behavior: "smooth" });
+        return;
+      }
+      if (nameTaken) {
+        errorEl.textContent = t.errorUsedName;
+        errorEl.style.display = "block";
+        window.scrollTo({ top: 0, behavior: "smooth" });
+        return;
+      }
+      if (emailTaken) {
+        errorEl.textContent = t.errorUsedEmail;
+        errorEl.style.display = "block";
+        window.scrollTo({ top: 0, behavior: "smooth" });
+        return;
+      }
+
       submitBtn.disabled = true;
       submitBtn.textContent = t.submitting || "...";
 
@@ -608,14 +660,24 @@
         const data = await res.json();
 
         if (!res.ok) {
-          // 409 = duplicate: same firstName + lastName + email already registered
-          errorEl.textContent = res.status === 409 ? t.errorUsed : t.errorServer;
+          if (res.status === 409) {
+            // Server-side duplicate — determine which field caused it if possible
+            const msg = (data.field === "email") ? t.errorUsedEmail
+                      : (data.field === "name")  ? t.errorUsedName
+                      : t.errorUsed;
+            errorEl.textContent = msg;
+          } else {
+            errorEl.textContent = t.errorServer;
+          }
           errorEl.style.display = "block";
           window.scrollTo({ top: 0, behavior: "smooth" });
           submitBtn.disabled = false;
           submitBtn.textContent = t.submit;
           return;
         }
+
+        // ── Success: save to localStorage before redirecting ──────────
+        saveRegistration(firstName, lastName, correo);
 
         const nombre = firstName + " " + lastName;
         window.location.href =

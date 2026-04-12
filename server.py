@@ -5,7 +5,7 @@ import psycopg2, psycopg2.extras, os
 app = Flask(__name__)
 
 # ── CORS: permite llamadas desde GitHub Pages ──────────────────────────
-CORS(app, origins=["https://yenryortega.github.io", "http://localhost"])
+CORS(app, origins=["https://TU-USUARIO.github.io", "http://localhost"])
 
 # ── Conexión a PostgreSQL ──────────────────────────────────────────────
 # Railway inyecta DATABASE_URL automáticamente al agregar PostgreSQL
@@ -20,21 +20,56 @@ def get_db():
 def init_db():
     with get_db() as con:
         with con.cursor() as cur:
+            # Create table with two separate UNIQUE constraints:
+            #   - email alone
+            #   - (first_name, last_name) together
             cur.execute("""
                 CREATE TABLE IF NOT EXISTS registrations (
                     id          SERIAL PRIMARY KEY,
                     room        TEXT    NOT NULL,
                     first_name  TEXT    NOT NULL,
                     last_name   TEXT    NOT NULL,
-                    email       TEXT    NOT NULL,
+                    email       TEXT    NOT NULL UNIQUE,
                     phone       TEXT,
                     country     TEXT,
                     zip         TEXT,
                     lang        TEXT    DEFAULT 'en',
                     ticket_used BOOLEAN DEFAULT FALSE,
                     created_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                    UNIQUE (first_name, last_name, email)
+                    UNIQUE (first_name, last_name)
                 )
+            """)
+            # Migration for existing tables: drop old combined constraint,
+            # add the two separate ones. All steps are idempotent.
+            cur.execute("""
+                DO $$
+                BEGIN
+                    IF EXISTS (
+                        SELECT 1 FROM pg_constraint
+                        WHERE conname = 'registrations_first_name_last_name_email_key'
+                    ) THEN
+                        ALTER TABLE registrations
+                            DROP CONSTRAINT registrations_first_name_last_name_email_key;
+                    END IF;
+
+                    IF NOT EXISTS (
+                        SELECT 1 FROM pg_constraint
+                        WHERE conname = 'registrations_email_key'
+                    ) THEN
+                        ALTER TABLE registrations
+                            ADD CONSTRAINT registrations_email_key UNIQUE (email);
+                    END IF;
+
+                    IF NOT EXISTS (
+                        SELECT 1 FROM pg_constraint
+                        WHERE conname = 'registrations_first_name_last_name_key'
+                    ) THEN
+                        ALTER TABLE registrations
+                            ADD CONSTRAINT registrations_first_name_last_name_key
+                            UNIQUE (first_name, last_name);
+                    END IF;
+                END
+                $$;
             """)
         con.commit()
 
@@ -59,13 +94,22 @@ def register():
     try:
         with get_db() as con:
             with con.cursor() as cur:
+                # Check name duplicate
                 cur.execute(
                     """SELECT id FROM registrations
-                       WHERE first_name = %s AND last_name = %s AND email = %s""",
-                    (first_name, last_name, email)
+                       WHERE first_name = %s AND last_name = %s""",
+                    (first_name, last_name)
                 )
                 if cur.fetchone():
-                    return jsonify({"error": "guest_already_registered"}), 409
+                    return jsonify({"error": "guest_already_registered", "field": "name"}), 409
+
+                # Check email duplicate
+                cur.execute(
+                    "SELECT id FROM registrations WHERE email = %s",
+                    (email,)
+                )
+                if cur.fetchone():
+                    return jsonify({"error": "guest_already_registered", "field": "email"}), 409
 
                 cur.execute(
                     """INSERT INTO registrations
@@ -74,8 +118,11 @@ def register():
                     (room, first_name, last_name, email, phone, country, zip_code, lang)
                 )
             con.commit()
-    except psycopg2.errors.UniqueViolation:
-        return jsonify({"error": "guest_already_registered"}), 409
+    except psycopg2.errors.UniqueViolation as e:
+        # Fallback: determine which constraint was violated
+        msg = str(e)
+        field = "email" if "email" in msg else "name"
+        return jsonify({"error": "guest_already_registered", "field": field}), 409
 
     return jsonify({"success": True, "room": room}), 201
 
@@ -83,19 +130,38 @@ def register():
 # ── GET /check-ticket ──────────────────────────────────────────────────
 @app.route("/check-ticket", methods=["GET"])
 def check_ticket():
-    email = request.args.get("email", "").strip().lower()
+    email  = request.args.get("email", "").strip().lower()
+    nombre = request.args.get("nombre", "").strip()
 
-    if not email:
+    if not email and not nombre:
         return jsonify({"registered": False, "ticket_used": False})
 
     with get_db() as con:
         with con.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
-            cur.execute(
-                """SELECT first_name, last_name, ticket_used, created_at
-                   FROM registrations WHERE email = %s""",
-                (email,)
-            )
-            row = cur.fetchone()
+            row = None
+
+            # Search by email first
+            if email:
+                cur.execute(
+                    """SELECT first_name, last_name, ticket_used, created_at
+                       FROM registrations WHERE email = %s""",
+                    (email,)
+                )
+                row = cur.fetchone()
+
+            # If not found by email, try by full name
+            if not row and nombre:
+                parts = nombre.strip().split(" ", 1)
+                first = parts[0] if len(parts) > 0 else ""
+                last  = parts[1] if len(parts) > 1 else ""
+                if first and last:
+                    cur.execute(
+                        """SELECT first_name, last_name, ticket_used, created_at
+                           FROM registrations
+                           WHERE first_name = %s AND last_name = %s""",
+                        (first, last)
+                    )
+                    row = cur.fetchone()
 
     if not row:
         return jsonify({"registered": False, "ticket_used": False})
@@ -112,17 +178,36 @@ def check_ticket():
 @app.route("/use-ticket", methods=["POST"])
 def use_ticket():
     data  = request.get_json(silent=True) or {}
-    email = data.get("email", "").strip().lower()
+    email  = data.get("email", "").strip().lower()
+    nombre = data.get("nombre", "").strip()
 
-    if not email:
-        return jsonify({"error": "missing_email"}), 400
+    if not email and not nombre:
+        return jsonify({"error": "missing_fields"}), 400
 
     with get_db() as con:
         with con.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
-            cur.execute(
-                "SELECT id, ticket_used FROM registrations WHERE email = %s", (email,)
-            )
-            row = cur.fetchone()
+            row = None
+
+            # Find by email
+            if email:
+                cur.execute(
+                    "SELECT id, ticket_used FROM registrations WHERE email = %s",
+                    (email,)
+                )
+                row = cur.fetchone()
+
+            # If not found by email, try by full name
+            if not row and nombre:
+                parts = nombre.strip().split(" ", 1)
+                first = parts[0] if len(parts) > 0 else ""
+                last  = parts[1] if len(parts) > 1 else ""
+                if first and last:
+                    cur.execute(
+                        """SELECT id, ticket_used FROM registrations
+                           WHERE first_name = %s AND last_name = %s""",
+                        (first, last)
+                    )
+                    row = cur.fetchone()
 
             if not row:
                 return jsonify({"error": "not_found"}), 404
@@ -131,7 +216,8 @@ def use_ticket():
                 return jsonify({"error": "already_used"}), 409
 
             cur.execute(
-                "UPDATE registrations SET ticket_used = TRUE WHERE email = %s", (email,)
+                "UPDATE registrations SET ticket_used = TRUE WHERE id = %s",
+                (row["id"],)
             )
         con.commit()
 
