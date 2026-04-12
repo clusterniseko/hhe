@@ -395,7 +395,7 @@
         privacyCalifornia: "California Consumers, learn about",
         privacyCaliforniaEnd: "Hilton's collection and use of your personal information.",
         errorRequired: "Please complete all required fields.",
-        errorUsed: "This room has already been registered.",
+        errorUsed: "This name and email have already been registered.",
         errorServer: "Server error. Please try again.",
         errorOffline: "Could not reach server. Please check your connection.",
         submitting: "Submitting…",
@@ -421,7 +421,7 @@
         privacyCalifornia: "カリフォルニア州の消費者の方はこちら",
         privacyCaliforniaEnd: "Hiltonによる個人情報の収集と利用について。",
         errorRequired: "すべての必須項目を入力してください。",
-        errorUsed: "この部屋番号はすでに登録済みです。",
+        errorUsed: "この氏名とメールアドレスはすでに登録済みです。",
         errorServer: "サーバーエラーが発生しました。もう一度お試しください。",
         errorOffline: "サーバーに接続できません。接続を確認してください。",
         submitting: "送信中…",
@@ -447,7 +447,7 @@
         privacyCalifornia: "캘리포니아 소비자 안내",
         privacyCaliforniaEnd: "힐튼의 개인정보 수집 및 이용에 관하여.",
         errorRequired: "모든 필수 항목을 입력해 주세요.",
-        errorUsed: "이 객실 번호는 이미 등록되었습니다.",
+        errorUsed: "이 이름과 이메일은 이미 등록되었습니다.",
         errorServer: "서버 오류가 발생했습니다. 다시 시도해 주세요.",
         errorOffline: "서버에 연결할 수 없습니다. 연결을 확인하세요.",
         submitting: "제출 중…",
@@ -473,7 +473,7 @@
         privacyCalifornia: "加利福尼亚州消费者，了解",
         privacyCaliforniaEnd: "希尔顿对您个人信息的收集和使用。",
         errorRequired: "请填写所有必填字段。",
-        errorUsed: "该房间号已被注册。",
+        errorUsed: "该姓名和电子邮箱已被注册。",
         errorServer: "服务器错误，请重试。",
         errorOffline: "无法连接到服务器，请检查您的网络连接。",
         submitting: "提交中…",
@@ -499,7 +499,7 @@
         privacyCalifornia: "Consommateurs californiens, renseignez-vous sur",
         privacyCaliforniaEnd: "la collecte et l'utilisation de vos informations personnelles par Hilton.",
         errorRequired: "Veuillez remplir tous les champs obligatoires.",
-        errorUsed: "Cette chambre a déjà été enregistrée.",
+        errorUsed: "Ce nom et cet e-mail ont déjà été enregistrés.",
         errorServer: "Erreur serveur. Veuillez réessayer.",
         errorOffline: "Impossible de contacter le serveur. Vérifiez votre connexion.",
         submitting: "Envoi en cours…",
@@ -525,7 +525,7 @@
         privacyCalifornia: "Consumidores de California, conozca",
         privacyCaliforniaEnd: "la recopilación y el uso de su información personal por parte de Hilton.",
         errorRequired: "Por favor, completa todos los campos requeridos.",
-        errorUsed: "Esta habitación ya ha sido registrada.",
+        errorUsed: "Este nombre y correo electrónico ya han sido registrados.",
         errorServer: "Error del servidor. Por favor, inténtalo de nuevo.",
         errorOffline: "No se puede conectar al servidor. Verifica tu conexión.",
         submitting: "Enviando…",
@@ -608,7 +608,7 @@
         const data = await res.json();
 
         if (!res.ok) {
-          // 409 = habitación duplicada
+          // 409 = duplicate: same firstName + lastName + email already registered
           errorEl.textContent = res.status === 409 ? t.errorUsed : t.errorServer;
           errorEl.style.display = "block";
           window.scrollTo({ top: 0, behavior: "smooth" });

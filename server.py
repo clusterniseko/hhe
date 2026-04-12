@@ -5,7 +5,7 @@ import psycopg2, psycopg2.extras, os
 app = Flask(__name__)
 
 # ── CORS: permite llamadas desde GitHub Pages ──────────────────────────
-CORS(app, origins=["https://yenryortega.github.io", "http://localhost"])
+CORS(app, origins=["https://TU-USUARIO.github.io", "http://localhost"])
 
 # ── Conexión a PostgreSQL ──────────────────────────────────────────────
 # Railway inyecta DATABASE_URL automáticamente al agregar PostgreSQL
@@ -23,16 +23,17 @@ def init_db():
             cur.execute("""
                 CREATE TABLE IF NOT EXISTS registrations (
                     id          SERIAL PRIMARY KEY,
-                    room        TEXT    NOT NULL UNIQUE,
+                    room        TEXT    NOT NULL,
                     first_name  TEXT    NOT NULL,
                     last_name   TEXT    NOT NULL,
-                    email       TEXT    NOT NULL UNIQUE,
+                    email       TEXT    NOT NULL,
                     phone       TEXT,
                     country     TEXT,
                     zip         TEXT,
                     lang        TEXT    DEFAULT 'en',
                     ticket_used BOOLEAN DEFAULT FALSE,
-                    created_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                    created_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    UNIQUE (first_name, last_name, email)
                 )
             """)
         con.commit()
@@ -59,10 +60,12 @@ def register():
         with get_db() as con:
             with con.cursor() as cur:
                 cur.execute(
-                    "SELECT id FROM registrations WHERE room = %s", (room,)
+                    """SELECT id FROM registrations
+                       WHERE first_name = %s AND last_name = %s AND email = %s""",
+                    (first_name, last_name, email)
                 )
                 if cur.fetchone():
-                    return jsonify({"error": "room_already_registered"}), 409
+                    return jsonify({"error": "guest_already_registered"}), 409
 
                 cur.execute(
                     """INSERT INTO registrations
@@ -72,7 +75,7 @@ def register():
                 )
             con.commit()
     except psycopg2.errors.UniqueViolation:
-        return jsonify({"error": "room_already_registered"}), 409
+        return jsonify({"error": "guest_already_registered"}), 409
 
     return jsonify({"success": True, "room": room}), 201
 

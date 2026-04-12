@@ -135,7 +135,7 @@
       room   = "000";
     }
 
-    // Al cargar, verificar si este ticket ya fue usado en la API
+    // Al cargar, verificar si este ticket ya fue usado (por email + nombre, no por habitación)
     checkTicketStatus();
 
     async function checkTicketStatus() {
