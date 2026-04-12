@@ -5,7 +5,7 @@ import psycopg2, psycopg2.extras, os
 app = Flask(__name__)
 
 # ── CORS: permite llamadas desde GitHub Pages ──────────────────────────
-CORS(app, origins=["https://yenryortega.github.io", "http://localhost"])
+CORS(app, origins=["https://TU-USUARIO.github.io", "http://localhost"])
 
 # ── Conexión a PostgreSQL ──────────────────────────────────────────────
 DATABASE_URL = os.environ.get("DATABASE_URL", "")
@@ -265,6 +265,31 @@ def admin_registrations():
             )
             rows = cur.fetchall()
     return jsonify([dict(r) for r in rows])
+
+
+# ── DELETE /admin/delete ──────────────────────────────────────────────
+@app.route("/admin/delete", methods=["DELETE"])
+def admin_delete():
+    ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD", "hilton2025")
+    if request.args.get("password", "") != ADMIN_PASSWORD:
+        return jsonify({"error": "unauthorized"}), 401
+
+    data  = request.get_json(silent=True) or {}
+    email = data.get("email", "").strip().lower()
+
+    if not email:
+        return jsonify({"error": "missing_email"}), 400
+
+    with get_db() as con:
+        with con.cursor() as cur:
+            cur.execute("DELETE FROM registrations WHERE email = %s", (email,))
+            deleted = cur.rowcount
+        con.commit()
+
+    if deleted == 0:
+        return jsonify({"error": "not_found"}), 404
+
+    return jsonify({"success": True, "deleted": deleted}), 200
 
 
 # ── GET /health ────────────────────────────────────────────────────────

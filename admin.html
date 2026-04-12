@@ -258,14 +258,28 @@
       background: hsl(220, 45%, 18%);
       border: 1px solid var(--navy-border);
       border-radius: 14px;
-      overflow: hidden;
+      overflow-x: auto;
     }
 
     table {
       width: 100%;
+      min-width: 900px;
       border-collapse: collapse;
       font-size: 0.875rem;
     }
+
+    /* Sticky delete column — always visible */
+    th:last-child,
+    td:last-child {
+      position: sticky;
+      right: 0;
+      background: hsl(220, 45%, 18%);
+      min-width: 90px;
+      text-align: center;
+      box-shadow: -3px 0 8px hsla(220, 55%, 8%, 0.4);
+    }
+    thead tr th:last-child { background: hsl(220, 40%, 14%); }
+    tbody tr:hover td:last-child { background: hsl(220, 40%, 22%); }
 
     thead tr {
       background: hsl(220, 40%, 14%);
@@ -804,8 +818,23 @@
     function permDelete(email) {
       openModal(
         "Delete permanently?",
-        "This record will be removed from the trash and cannot be recovered.",
-        () => {
+        "This record will be removed from the database and cannot be recovered.",
+        async () => {
+          try {
+            const res = await fetch(`${API_URL}/admin/delete?password=${encodeURIComponent(password)}`, {
+              method: "DELETE",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ email })
+            });
+            if (!res.ok) {
+              const d = await res.json().catch(() => ({}));
+              alert("Server error: " + (d.error || res.status));
+              return;
+            }
+          } catch (err) {
+            alert("Could not reach server. Record NOT deleted from database.");
+            return;
+          }
           trashData = trashData.filter(r => r.email !== email);
           renderTrash();
           updateTrashBtn();
@@ -817,8 +846,23 @@
       if (trashData.length === 0) return;
       openModal(
         "Empty trash?",
-        `This will permanently delete all ${trashData.length} record(s) in the trash. This cannot be undone.`,
-        () => {
+        `This will permanently delete all ${trashData.length} record(s) from the database. This cannot be undone.`,
+        async () => {
+          const emails = trashData.map(r => r.email);
+          let failed = 0;
+          for (const email of emails) {
+            try {
+              const res = await fetch(`${API_URL}/admin/delete?password=${encodeURIComponent(password)}`, {
+                method: "DELETE",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ email })
+              });
+              if (!res.ok) failed++;
+            } catch { failed++; }
+          }
+          if (failed > 0) {
+            alert(`${failed} record(s) could not be deleted from the server.`);
+          }
           trashData = [];
           renderTrash();
           updateTrashBtn();
