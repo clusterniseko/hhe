@@ -5,10 +5,9 @@ import psycopg2, psycopg2.extras, os
 app = Flask(__name__)
 
 # ── CORS: permite llamadas desde GitHub Pages ──────────────────────────
-CORS(app, origins=["https://yenryortega.github.io", "http://localhost"])
+CORS(app, origins=["https://TU-USUARIO.github.io", "http://localhost"])
 
 # ── Conexión a PostgreSQL ──────────────────────────────────────────────
-# Railway inyecta DATABASE_URL automáticamente al agregar PostgreSQL
 DATABASE_URL = os.environ.get("DATABASE_URL", "")
 
 
@@ -20,27 +19,24 @@ def get_db():
 def init_db():
     with get_db() as con:
         with con.cursor() as cur:
-            # Create table with two separate UNIQUE constraints:
-            #   - email alone
-            #   - (first_name, last_name) together
+            # 1. Create table if it doesn't exist yet (new installs)
             cur.execute("""
                 CREATE TABLE IF NOT EXISTS registrations (
                     id          SERIAL PRIMARY KEY,
                     room        TEXT    NOT NULL,
                     first_name  TEXT    NOT NULL,
                     last_name   TEXT    NOT NULL,
-                    email       TEXT    NOT NULL UNIQUE,
+                    email       TEXT    NOT NULL,
                     phone       TEXT,
                     country     TEXT,
                     zip         TEXT,
                     lang        TEXT    DEFAULT 'en',
                     ticket_used BOOLEAN DEFAULT FALSE,
-                    created_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                    UNIQUE (first_name, last_name)
+                    created_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                 )
             """)
-            # Migration for existing tables: drop old combined constraint,
-            # add the two separate ones. All steps are idempotent.
+
+            # 2. Drop the old combined constraint if it exists
             cur.execute("""
                 DO $$
                 BEGIN
@@ -51,7 +47,29 @@ def init_db():
                         ALTER TABLE registrations
                             DROP CONSTRAINT registrations_first_name_last_name_email_key;
                     END IF;
+                END $$;
+            """)
 
+            # 3. Deduplicate by email — keep the row with the highest id (most recent)
+            cur.execute("""
+                DELETE FROM registrations
+                WHERE id NOT IN (
+                    SELECT MAX(id) FROM registrations GROUP BY email
+                );
+            """)
+
+            # 4. Deduplicate by (first_name, last_name) — keep the most recent
+            cur.execute("""
+                DELETE FROM registrations
+                WHERE id NOT IN (
+                    SELECT MAX(id) FROM registrations GROUP BY first_name, last_name
+                );
+            """)
+
+            # 5. Now safely add the two separate UNIQUE constraints
+            cur.execute("""
+                DO $$
+                BEGIN
                     IF NOT EXISTS (
                         SELECT 1 FROM pg_constraint
                         WHERE conname = 'registrations_email_key'
@@ -68,8 +86,7 @@ def init_db():
                             ADD CONSTRAINT registrations_first_name_last_name_key
                             UNIQUE (first_name, last_name);
                     END IF;
-                END
-                $$;
+                END $$;
             """)
         con.commit()
 
@@ -119,9 +136,7 @@ def register():
                 )
             con.commit()
     except psycopg2.errors.UniqueViolation as e:
-        # Fallback: determine which constraint was violated
-        msg = str(e)
-        field = "email" if "email" in msg else "name"
+        field = "email" if "email" in str(e) else "name"
         return jsonify({"error": "guest_already_registered", "field": field}), 409
 
     return jsonify({"success": True, "room": room}), 201
@@ -140,7 +155,6 @@ def check_ticket():
         with con.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
             row = None
 
-            # Search by email first
             if email:
                 cur.execute(
                     """SELECT first_name, last_name, ticket_used, created_at
@@ -149,7 +163,6 @@ def check_ticket():
                 )
                 row = cur.fetchone()
 
-            # If not found by email, try by full name
             if not row and nombre:
                 parts = nombre.strip().split(" ", 1)
                 first = parts[0] if len(parts) > 0 else ""
@@ -177,7 +190,7 @@ def check_ticket():
 # ── POST /use-ticket ───────────────────────────────────────────────────
 @app.route("/use-ticket", methods=["POST"])
 def use_ticket():
-    data  = request.get_json(silent=True) or {}
+    data   = request.get_json(silent=True) or {}
     email  = data.get("email", "").strip().lower()
     nombre = data.get("nombre", "").strip()
 
@@ -188,7 +201,6 @@ def use_ticket():
         with con.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
             row = None
 
-            # Find by email
             if email:
                 cur.execute(
                     "SELECT id, ticket_used FROM registrations WHERE email = %s",
@@ -196,7 +208,6 @@ def use_ticket():
                 )
                 row = cur.fetchone()
 
-            # If not found by email, try by full name
             if not row and nombre:
                 parts = nombre.strip().split(" ", 1)
                 first = parts[0] if len(parts) > 0 else ""
