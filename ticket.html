@@ -86,6 +86,48 @@
       from { opacity: 0; transform: translateY(20px); }
       to { opacity: 1; transform: translateY(0); }
     }
+
+    /* ── Mobile (max 480px) ── */
+    @media (max-width: 480px) {
+      body {
+        padding: 1.5rem 1rem;
+        align-items: flex-start;
+        padding-top: 3rem;
+      }
+
+      .wrapper {
+        max-width: 100%;
+      }
+
+      .hotel-name {
+        font-size: 0.75rem;
+        letter-spacing: 0.2em;
+        margin-bottom: 1.5rem;
+      }
+
+      #ticket-view img {
+        width: 220px;
+      }
+
+      #gracias h1 {
+        font-size: 2.75rem;
+      }
+
+      #gracias .nombre {
+        font-size: 1rem;
+      }
+    }
+
+    /* ── Small phones (max 360px) ── */
+    @media (max-width: 360px) {
+      #ticket-view img {
+        width: 180px;
+      }
+
+      #gracias h1 {
+        font-size: 2.25rem;
+      }
+    }
   </style>
 </head>
 <body>
