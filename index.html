@@ -275,6 +275,81 @@
       from { opacity: 0; transform: translateY(24px); }
       to { opacity: 1; transform: translateY(0); }
     }
+
+    /* ── Tablet (max 640px) ── */
+    @media (max-width: 640px) {
+      body {
+        padding: 1.5rem 0.75rem 2rem;
+        align-items: flex-start;
+      }
+
+      .wrapper {
+        max-width: 100%;
+      }
+
+      .lang-switcher {
+        gap: 0.25rem;
+        margin-bottom: 1.25rem;
+      }
+
+      .lang-btn {
+        font-size: 0.7rem;
+        padding: 0.28rem 0.5rem;
+      }
+
+      .header h1 {
+        font-size: 1.6rem;
+      }
+
+      .header p {
+        font-size: 0.825rem;
+      }
+
+      .card {
+        padding: 1.5rem 1.125rem;
+        border-radius: 14px;
+      }
+
+      .section-title {
+        font-size: 1rem;
+      }
+
+      /* Stack first/last name on mobile */
+      .field-row {
+        grid-template-columns: 1fr;
+        gap: 1.25rem;
+      }
+
+      input, select {
+        height: 50px;          /* easier tap target */
+        font-size: 1rem;       /* prevents iOS auto-zoom (must be ≥16px) */
+      }
+
+      button[type="submit"] {
+        height: 54px;
+        font-size: 1rem;
+      }
+
+      .hotel-photo img {
+        height: 180px;
+      }
+    }
+
+    /* ── Small phones (max 380px) ── */
+    @media (max-width: 380px) {
+      .header h1 {
+        font-size: 1.35rem;
+      }
+
+      .card {
+        padding: 1.25rem 1rem;
+      }
+
+      .lang-btn {
+        font-size: 0.65rem;
+        padding: 0.25rem 0.45rem;
+      }
+    }
   </style>
 </head>
 <body>
@@ -408,10 +483,10 @@
         room: "部屋番号",
         required: "（必須）",
         lastName: "名 (半角ローマ字）",
-        firstName: "姓（半角ローマ字）",
+        firstName: "姓 (半角ローマ字）",
         phone: "携帯電話番号",
         email: "メールアドレス",
-        country: "国 / 地域（半角ローマ字）",
+        country: "国 / 地域 (半角ローマ字）",
         zip: "郵便番号",
         submit: "送信",
         privacyText: "送信をクリックすることで、",
