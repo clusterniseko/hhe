@@ -139,6 +139,16 @@
 
     .login-body input::placeholder { color: hsla(40, 20%, 70%, 0.45); }
 
+    .login-body input:-webkit-autofill,
+    .login-body input:-webkit-autofill:hover,
+    .login-body input:-webkit-autofill:focus,
+    .login-body input:-webkit-autofill:active {
+      -webkit-text-fill-color: hsl(40, 30%, 92%);
+      -webkit-box-shadow: 0 0 0 1000px hsl(220, 50%, 11%) inset;
+      caret-color: hsl(40, 30%, 92%);
+      transition: background-color 9999s ease-in-out 0s;
+    }
+
     .login-body button {
       width: 100%;
       height: 52px;
