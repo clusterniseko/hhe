@@ -399,27 +399,41 @@
     .filter-date.active { border-color: var(--gold); background: var(--gold-dim); color: var(--gold-light); }
     .filter-date::-webkit-calendar-picker-indicator { filter: invert(0.6); cursor: pointer; }
 
-    /* Date-range group: From → To with clear button */
-    .date-range {
+    /* Single date filter box */
+    .date-filter-wrap {
+      position: relative;
       display: inline-flex;
       align-items: center;
-      gap: 0.4rem;
     }
-    .date-range .filter-date {
-      width: 140px;
+    .date-filter-wrap .filter-date {
+      width: 170px;
       font-size: 0.78rem;
-      padding: 0 0.5rem;
+      padding: 0 2rem 0 0.75rem;
     }
-    .date-range-sep {
+    .date-filter-placeholder {
+      position: absolute;
+      left: 0.75rem;
+      top: 50%;
+      transform: translateY(-50%);
+      pointer-events: none;
       color: var(--muted);
-      font-size: 0.85rem;
-      user-select: none;
+      font-size: 0.8rem;
+      font-family: 'DM Sans', sans-serif;
+      background: hsl(220, 40%, 11%);
+      white-space: nowrap;
+      transition: opacity 0.15s;
     }
-    .filter-date-clear {
-      width: 28px;
-      height: 28px;
+    .date-filter-wrap.focused .date-filter-placeholder,
+    .date-filter-wrap.has-value .date-filter-placeholder { opacity: 0; }
+    .date-filter-clear {
+      position: absolute;
+      right: 0.4rem;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 20px;
+      height: 20px;
       border-radius: 50%;
-      border: 1px solid var(--navy-border);
+      border: none;
       background: transparent;
       color: var(--muted);
       font-size: 1rem;
@@ -429,13 +443,11 @@
       align-items: center;
       justify-content: center;
       padding: 0;
-      transition: all 0.2s;
+      transition: color 0.2s;
+      z-index: 1;
     }
-    .filter-date-clear:hover {
-      border-color: var(--red);
-      color: var(--red);
-    }
-    .filter-date-clear.visible { display: inline-flex; }
+    .date-filter-clear:hover { color: var(--red); }
+    .date-filter-clear.visible { display: inline-flex; }
 
     .filter-sort {
       height: 40px;
@@ -922,15 +934,13 @@
         height: 50px;
       }
 
-      /* Date-range becomes its own line, full width */
-      .date-range {
+      /* Date filter becomes its own line, full width */
+      .date-filter-wrap {
         flex-basis: 100%;
         order: 5;
       }
-      .date-range .filter-date {
-        flex: 1;
-        width: auto;
-        min-width: 0;
+      .date-filter-wrap .filter-date {
+        width: 100%;
       }
     }
 
@@ -1174,11 +1184,12 @@
       <button class="filter-btn active" id="filter-all"     onclick="setFilter('all')">All</button>
       <button class="filter-btn"        id="filter-used"    onclick="setFilter('used')">Used</button>
       <button class="filter-btn"        id="filter-pending" onclick="setFilter('pending')">Pending</button>
-      <div class="date-range">
-        <input class="filter-date" id="filter-date-from" type="date" title="From date" oninput="renderTable()">
-        <span class="date-range-sep">→</span>
-        <input class="filter-date" id="filter-date-to"   type="date" title="To date"   oninput="renderTable()">
-        <button class="filter-date-clear" id="filter-date-clear" onclick="clearDateRange()" title="Clear date filter">×</button>
+      <div class="date-filter-wrap">
+        <input class="filter-date" id="filter-date" type="date" oninput="renderTable()"
+          onfocus="this.closest('.date-filter-wrap').classList.add('focused')"
+          onblur="this.closest('.date-filter-wrap').classList.remove('focused')">
+        <span class="date-filter-placeholder">Filter by date</span>
+        <button class="date-filter-clear" id="filter-date-clear" onclick="clearDateFilter()" title="Clear date filter">×</button>
       </div>
       <select class="filter-sort"       id="filter-sort"    onchange="applySort()">
         <option value="created_at_desc">Newest first</option>
@@ -1411,9 +1422,10 @@
       renderTable();
     }
 
-    function clearDateRange() {
-      document.getElementById("filter-date-from").value = "";
-      document.getElementById("filter-date-to").value   = "";
+    function clearDateFilter() {
+      const el = document.getElementById("filter-date");
+      el.value = "";
+      el.closest(".date-filter-wrap").classList.remove("has-value");
       renderTable();
     }
 
@@ -1430,22 +1442,13 @@
     function renderTable() {
       const query = document.getElementById("search-input").value.toLowerCase();
 
-      // Date-range filter (From / To). Either or both can be set.
-      const dateFromEl = document.getElementById("filter-date-from");
-      const dateToEl   = document.getElementById("filter-date-to");
-      let dateFrom     = dateFromEl.value;  // YYYY-MM-DD or ""
-      let dateTo       = dateToEl.value;
+      // Single date filter
+      const dateEl  = document.getElementById("filter-date");
+      const dateVal = dateEl.value; // YYYY-MM-DD or ""
 
-      // If user picks From > To, swap them so the filter still works
-      if (dateFrom && dateTo && dateFrom > dateTo) {
-        [dateFrom, dateTo] = [dateTo, dateFrom];
-      }
-
-      // Visual cue + clear-button visibility
-      dateFromEl.classList.toggle("active", !!dateFrom);
-      dateToEl.classList.toggle("active",   !!dateTo);
-      document.getElementById("filter-date-clear")
-              .classList.toggle("visible", !!(dateFrom || dateTo));
+      dateEl.classList.toggle("active", !!dateVal);
+      dateEl.closest(".date-filter-wrap").classList.toggle("has-value", !!dateVal);
+      document.getElementById("filter-date-clear").classList.toggle("visible", !!dateVal);
 
       // Sync sort dropdown with current sort state
       const sortSelect = document.getElementById("filter-sort");
@@ -1464,11 +1467,9 @@
       let rows = allData.filter(r => {
         if (activeFilter === "used"    && !r.ticket_used) return false;
         if (activeFilter === "pending" &&  r.ticket_used) return false;
-        if (dateFrom || dateTo) {
+        if (dateVal) {
           if (!r.created_at) return false;
-          const day = r.created_at.slice(0, 10); // YYYY-MM-DD
-          if (dateFrom && day < dateFrom) return false;
-          if (dateTo   && day > dateTo)   return false;
+          if (r.created_at.slice(0, 10) !== dateVal) return false;
         }
         if (query) {
           const haystack = [r.room, r.first_name, r.last_name, r.email, r.phone, r.country]
