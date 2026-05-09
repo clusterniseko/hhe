@@ -398,6 +398,7 @@
     .filter-date:focus, .filter-date:hover { border-color: var(--gold); }
     .filter-date.active { border-color: var(--gold); background: var(--gold-dim); color: var(--gold-light); }
     .filter-date::-webkit-calendar-picker-indicator { filter: invert(0.6); cursor: pointer; }
+    .date-filter-wrap .filter-date:not(.active):not(:focus) { color: transparent; }
 
     /* Single date filter box */
     .date-filter-wrap {
@@ -487,12 +488,22 @@
     .btn-logout:hover { border-color: var(--red); color: var(--red); }
 
     /* ── Table ── */
+    .scroll-mirror {
+      display: none;
+      overflow-x: auto;
+      overflow-y: hidden;
+      height: 12px;
+      border-radius: 14px 14px 0 0;
+    }
+    .scroll-mirror-inner { height: 1px; }
+    .has-scroll-mirror .scroll-mirror { display: block; }
     .table-wrap {
       background: hsl(220, 45%, 18%);
       border: 1px solid var(--navy-border);
       border-radius: 14px;
       overflow-x: auto;
     }
+    .has-scroll-mirror .table-wrap { border-radius: 0 0 14px 14px; }
 
     table {
       width: 100%;
@@ -1212,7 +1223,9 @@
       </div>
     </div>
 
-    <div class="table-wrap">
+    <div id="records-table-container">
+    <div class="scroll-mirror" id="records-scroll-mirror"><div class="scroll-mirror-inner"></div></div>
+    <div class="table-wrap" id="records-table-wrap">
       <table>
         <thead>
           <tr>
@@ -1276,6 +1289,7 @@
       </table>
     </div>
   </div>
+</div>
 
   <!-- ── Dashboard footer ── -->
   <footer class="dashboard-footer">Niseko Cluster · Drink Ticket · Internal Use Only</footer>
@@ -1914,6 +1928,42 @@
     document.getElementById("export-modal-backdrop").addEventListener("click", function(e) {
       if (e.target === this) closeExportModal();
     });
+
+    // ── Scroll mirror (top scrollbar for records table) ──────────────
+    (function() {
+      const mirror = document.getElementById("records-scroll-mirror");
+      const wrap   = document.getElementById("records-table-wrap");
+      if (!mirror || !wrap) return;
+      const inner  = mirror.firstElementChild;
+
+      function syncWidth() {
+        inner.style.width = wrap.scrollWidth + "px";
+        const container = document.getElementById("records-table-container");
+        if (container) container.classList.toggle("has-scroll-mirror", wrap.scrollWidth > wrap.clientWidth);
+      }
+
+      let mirrorScrolling = false, wrapScrolling = false;
+      mirror.addEventListener("scroll", () => {
+        if (wrapScrolling) return;
+        mirrorScrolling = true;
+        wrap.scrollLeft = mirror.scrollLeft;
+        mirrorScrolling = false;
+      });
+      wrap.addEventListener("scroll", () => {
+        if (mirrorScrolling) return;
+        wrapScrolling = true;
+        mirror.scrollLeft = wrap.scrollLeft;
+        wrapScrolling = false;
+      });
+
+      window.addEventListener("resize", syncWidth);
+      syncWidth();
+      // Re-sync after table data renders
+      const origRenderTable = window.renderTable;
+      if (typeof origRenderTable === "function") {
+        window.renderTable = function() { origRenderTable.apply(this, arguments); syncWidth(); };
+      }
+    })();
   </script>
 
   <!-- ── Export modal ── -->
