@@ -4,38 +4,23 @@ import psycopg2, psycopg2.extras, os
 
 app = Flask(__name__)
 
-# ── CORS: permite llamadas desde GitHub Pages ──────────────────────────
+# ── CORS ───────────────────────────────────────────────────────────────
 CORS(app, resources={r"/*": {"origins": "*"}})
 
-# ── Garantiza headers CORS incluso en respuestas de error (401, 404…) ──
-@app.after_request
-def add_cors_headers(response):
-    response.headers["Access-Control-Allow-Origin"]  = "*"
-    response.headers["Access-Control-Allow-Headers"] = "Content-Type, Authorization"
-    response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, OPTIONS"
-    return response
-
-@app.route("/", defaults={"path": ""}, methods=["OPTIONS"])
-@app.route("/<path:path>", methods=["OPTIONS"])
-def handle_options(path):
-    return "", 204
-
-# ── Conexión a PostgreSQL ──────────────────────────────────────────────
-DATABASE_URL = os.environ.get("DATABASE_URL", "")
-
-# ── Contraseña admin (definida UNA sola vez) ───────────────────────────
+# ── Config ─────────────────────────────────────────────────────────────
+DATABASE_URL   = os.environ.get("DATABASE_URL", "")
+ADMIN_USERNAME = os.environ.get("ADMIN_USERNAME", "admin")
 ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD", "HILTON2026")
 
 
 def get_db():
-    con = psycopg2.connect(DATABASE_URL)
-    return con
+    return psycopg2.connect(DATABASE_URL)
 
 
 def init_db():
     with get_db() as con:
         with con.cursor() as cur:
-            # 1. Create table if it doesn't exist yet (new installs)
+            # 1. Create table if it doesn't exist
             cur.execute("""
                 CREATE TABLE IF NOT EXISTS registrations (
                     id          SERIAL PRIMARY KEY,
@@ -46,13 +31,34 @@ def init_db():
                     phone       TEXT,
                     country     TEXT,
                     zip         TEXT,
-                    lang        TEXT    DEFAULT 'en',
-                    ticket_used BOOLEAN DEFAULT FALSE,
+                    lang        TEXT      DEFAULT 'en',
+                    ticket_used BOOLEAN   DEFAULT FALSE,
+                    deleted     BOOLEAN   DEFAULT FALSE,
+                    deleted_at  TIMESTAMP,
                     created_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                 )
             """)
 
-            # 2. Drop the old combined constraint if it exists
+            # 2. Add deleted / deleted_at columns to existing installs
+            cur.execute("""
+                DO $$
+                BEGIN
+                    IF NOT EXISTS (
+                        SELECT 1 FROM information_schema.columns
+                        WHERE table_name='registrations' AND column_name='deleted'
+                    ) THEN
+                        ALTER TABLE registrations ADD COLUMN deleted BOOLEAN DEFAULT FALSE;
+                    END IF;
+                    IF NOT EXISTS (
+                        SELECT 1 FROM information_schema.columns
+                        WHERE table_name='registrations' AND column_name='deleted_at'
+                    ) THEN
+                        ALTER TABLE registrations ADD COLUMN deleted_at TIMESTAMP;
+                    END IF;
+                END $$;
+            """)
+
+            # 3. Drop old combined constraint if it exists
             cur.execute("""
                 DO $$
                 BEGIN
@@ -66,7 +72,7 @@ def init_db():
                 END $$;
             """)
 
-            # 3. Deduplicate by email — keep the row with the highest id (most recent)
+            # 4. Deduplicate by email — keep most recent
             cur.execute("""
                 DELETE FROM registrations
                 WHERE id NOT IN (
@@ -74,7 +80,7 @@ def init_db():
                 );
             """)
 
-            # 4. Deduplicate by (first_name, last_name) — keep the most recent
+            # 5. Deduplicate by (first_name, last_name) — keep most recent
             cur.execute("""
                 DELETE FROM registrations
                 WHERE id NOT IN (
@@ -82,7 +88,7 @@ def init_db():
                 );
             """)
 
-            # 5. Now safely add the two separate UNIQUE constraints
+            # 6. Add unique constraints if missing
             cur.execute("""
                 DO $$
                 BEGIN
@@ -107,6 +113,13 @@ def init_db():
         con.commit()
 
 
+# ── Auth helper ────────────────────────────────────────────────────────
+def check_admin_auth():
+    username = request.headers.get("X-Admin-Username", "")
+    password = request.headers.get("X-Admin-Password", "")
+    return username == ADMIN_USERNAME and password == ADMIN_PASSWORD
+
+
 # ── POST /register ─────────────────────────────────────────────────────
 @app.route("/register", methods=["POST"])
 def register():
@@ -127,18 +140,17 @@ def register():
     try:
         with get_db() as con:
             with con.cursor() as cur:
-                # Check name duplicate
+                # Duplicate checks exclude soft-deleted records
                 cur.execute(
                     """SELECT id FROM registrations
-                       WHERE first_name = %s AND last_name = %s""",
+                       WHERE first_name = %s AND last_name = %s AND deleted = FALSE""",
                     (first_name, last_name)
                 )
                 if cur.fetchone():
                     return jsonify({"error": "guest_already_registered", "field": "name"}), 409
 
-                # Check email duplicate
                 cur.execute(
-                    "SELECT id FROM registrations WHERE email = %s",
+                    "SELECT id FROM registrations WHERE email = %s AND deleted = FALSE",
                     (email,)
                 )
                 if cur.fetchone():
@@ -174,7 +186,7 @@ def check_ticket():
             if email:
                 cur.execute(
                     """SELECT first_name, last_name, ticket_used, created_at
-                       FROM registrations WHERE email = %s""",
+                       FROM registrations WHERE email = %s AND deleted = FALSE""",
                     (email,)
                 )
                 row = cur.fetchone()
@@ -187,7 +199,7 @@ def check_ticket():
                     cur.execute(
                         """SELECT first_name, last_name, ticket_used, created_at
                            FROM registrations
-                           WHERE first_name = %s AND last_name = %s""",
+                           WHERE first_name = %s AND last_name = %s AND deleted = FALSE""",
                         (first, last)
                     )
                     row = cur.fetchone()
@@ -219,7 +231,7 @@ def use_ticket():
 
             if email:
                 cur.execute(
-                    "SELECT id, ticket_used FROM registrations WHERE email = %s",
+                    "SELECT id, ticket_used FROM registrations WHERE email = %s AND deleted = FALSE",
                     (email,)
                 )
                 row = cur.fetchone()
@@ -231,7 +243,7 @@ def use_ticket():
                 if first and last:
                     cur.execute(
                         """SELECT id, ticket_used FROM registrations
-                           WHERE first_name = %s AND last_name = %s""",
+                           WHERE first_name = %s AND last_name = %s AND deleted = FALSE""",
                         (first, last)
                     )
                     row = cur.fetchone()
@@ -251,24 +263,10 @@ def use_ticket():
     return jsonify({"success": True}), 200
 
 
-# ── GET /registrations ─────────────────────────────────────────────────
-@app.route("/registrations", methods=["GET"])
-def list_all():
-    with get_db() as con:
-        with con.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
-            cur.execute(
-                """SELECT room, first_name, last_name, email, phone,
-                          country, zip, lang, ticket_used, created_at
-                   FROM registrations ORDER BY created_at DESC"""
-            )
-            rows = cur.fetchall()
-    return jsonify([dict(r) for r in rows])
-
-
-# ── GET /admin/registrations ───────────────────────────────────────────
+# ── GET /admin/registrations — active records only ─────────────────────
 @app.route("/admin/registrations", methods=["GET"])
 def admin_registrations():
-    if request.args.get("password", "") != ADMIN_PASSWORD:
+    if not check_admin_auth():
         return jsonify({"error": "unauthorized"}), 401
 
     with get_db() as con:
@@ -276,16 +274,95 @@ def admin_registrations():
             cur.execute(
                 """SELECT room, first_name, last_name, email, phone,
                           country, zip, lang, ticket_used, created_at
-                   FROM registrations ORDER BY created_at DESC"""
+                   FROM registrations
+                   WHERE deleted = FALSE
+                   ORDER BY created_at DESC"""
             )
             rows = cur.fetchall()
     return jsonify([dict(r) for r in rows])
 
 
-# ── DELETE /admin/delete ──────────────────────────────────────────────
+# ── GET /admin/trash — soft-deleted records ────────────────────────────
+@app.route("/admin/trash", methods=["GET"])
+def admin_trash():
+    if not check_admin_auth():
+        return jsonify({"error": "unauthorized"}), 401
+
+    with get_db() as con:
+        with con.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
+            cur.execute(
+                """SELECT room, first_name, last_name, email, phone,
+                          country, zip, lang, ticket_used, created_at, deleted_at
+                   FROM registrations
+                   WHERE deleted = TRUE
+                   ORDER BY deleted_at DESC"""
+            )
+            rows = cur.fetchall()
+    return jsonify([dict(r) for r in rows])
+
+
+# ── POST /admin/soft-delete ────────────────────────────────────────────
+@app.route("/admin/soft-delete", methods=["POST"])
+def admin_soft_delete():
+    if not check_admin_auth():
+        return jsonify({"error": "unauthorized"}), 401
+
+    data  = request.get_json(silent=True) or {}
+    email = data.get("email", "").strip().lower()
+
+    if not email:
+        return jsonify({"error": "missing_email"}), 400
+
+    with get_db() as con:
+        with con.cursor() as cur:
+            cur.execute(
+                """UPDATE registrations
+                   SET deleted = TRUE, deleted_at = CURRENT_TIMESTAMP
+                   WHERE email = %s AND deleted = FALSE""",
+                (email,)
+            )
+            updated = cur.rowcount
+        con.commit()
+
+    if updated == 0:
+        return jsonify({"error": "not_found"}), 404
+
+    return jsonify({"success": True}), 200
+
+
+# ── POST /admin/restore ────────────────────────────────────────────────
+@app.route("/admin/restore", methods=["POST"])
+def admin_restore():
+    if not check_admin_auth():
+        return jsonify({"error": "unauthorized"}), 401
+
+    data  = request.get_json(silent=True) or {}
+    email = data.get("email", "").strip().lower()
+
+    if not email:
+        return jsonify({"error": "missing_email"}), 400
+
+    with get_db() as con:
+        with con.cursor() as cur:
+            cur.execute(
+                """UPDATE registrations
+                   SET deleted = FALSE, deleted_at = NULL
+                   WHERE email = %s AND deleted = TRUE""",
+                (email,)
+            )
+            updated = cur.rowcount
+        con.commit()
+
+    if updated == 0:
+        return jsonify({"error": "not_found"}), 404
+
+    return jsonify({"success": True}), 200
+
+
+# ── DELETE /admin/delete — permanent ──────────────────────────────────
 @app.route("/admin/delete", methods=["DELETE"])
 def admin_delete():
-    if request.args.get("password", "") != ADMIN_PASSWORD:
+    if not check_admin_auth():
         return jsonify({"error": "unauthorized"}), 401
 
     data  = request.get_json(silent=True) or {}
@@ -312,11 +389,11 @@ def health():
     return jsonify({"status": "ok"})
 
 
-# ── Arranque ───────────────────────────────────────────────────────────
+# ── Startup ────────────────────────────────────────────────────────────
 if __name__ == "__main__":
     init_db()
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port)
 
-# Gunicorn llama init_db() al importar el módulo
+# Gunicorn entry point
 init_db()
