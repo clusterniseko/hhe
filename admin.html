@@ -1088,46 +1088,103 @@
       margin-bottom: 0.4rem;
     }
 
-    .export-input-wrap { position: relative; }
-
-    .export-field input[type="date"] {
+    .date-picker-btn {
       width: 100%;
       height: 42px;
       padding: 0 0.85rem;
       border-radius: 8px;
       border: 1px solid var(--navy-border);
       background: hsl(220, 40%, 11%);
-      color: var(--cream);
+      color: var(--muted);
       font-family: 'DM Sans', sans-serif;
       font-size: 0.88rem;
-      outline: none;
-      color-scheme: dark;
-      transition: border-color 0.2s;
-      box-sizing: border-box;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: border-color 0.2s, background 0.2s, color 0.2s;
     }
-    .export-field input[type="date"]:focus,
-    .export-field input[type="date"]:hover { border-color: var(--gold); }
-    .export-field input[type="date"].active {
+    .date-picker-btn:hover { border-color: var(--gold); }
+    .date-picker-btn.has-value {
       border-color: var(--gold);
       background: var(--gold-dim);
       color: var(--gold-light);
     }
-    .export-field input[type="date"]:not(.active):not(:focus) { color: transparent; }
 
-    .export-input-placeholder {
-      position: absolute;
-      left: 0.85rem;
-      top: 50%;
-      transform: translateY(-50%);
-      pointer-events: none;
-      color: var(--muted);
-      font-size: 0.88rem;
-      font-family: 'DM Sans', sans-serif;
-      white-space: nowrap;
-      transition: opacity 0.15s;
+    /* Custom calendar popover */
+    #date-picker-popover {
+      display: none;
+      position: fixed;
+      z-index: 10000;
+      background: hsl(220, 45%, 18%);
+      border: 1px solid var(--navy-border);
+      border-radius: 14px;
+      box-shadow: 0 20px 60px hsla(220, 55%, 5%, 0.75);
+      padding: 1rem;
+      width: 296px;
     }
-    .export-input-wrap:focus-within .export-input-placeholder,
-    .export-field input[type="date"].active + .export-input-placeholder { opacity: 0; }
+    #date-picker-popover.open { display: block; }
+
+    .dpc-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 0.75rem;
+    }
+    .dpc-nav {
+      background: none;
+      border: none;
+      color: var(--muted);
+      font-size: 1.3rem;
+      line-height: 1;
+      cursor: pointer;
+      padding: 0.2rem 0.5rem;
+      border-radius: 6px;
+      transition: color 0.15s, background 0.15s;
+    }
+    .dpc-nav:hover { color: var(--cream); background: var(--navy-border); }
+    .dpc-month-label { font-weight: 600; font-size: 0.88rem; color: var(--cream); }
+
+    .dpc-weekdays {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      margin-bottom: 0.3rem;
+    }
+    .dpc-weekdays span {
+      text-align: center;
+      font-size: 0.6rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      color: var(--muted);
+      padding: 0.25rem 0;
+      letter-spacing: 0.04em;
+    }
+
+    .dpc-grid {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 2px;
+    }
+    .dpc-day {
+      aspect-ratio: 1;
+      min-height: 36px;
+      border: none;
+      background: none;
+      border-radius: 7px;
+      color: var(--cream);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.82rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.12s, color 0.12s;
+    }
+    .dpc-day:hover { background: var(--navy-border); }
+    .dpc-day.other-month { color: hsla(220, 20%, 55%, 0.35); }
+    .dpc-day.today { color: var(--gold); font-weight: 700; }
+    .dpc-day.selected { background: var(--gold); color: hsl(220, 55%, 10%); font-weight: 700; }
+    .dpc-day.selected:hover { background: var(--gold-light); }
 
     .export-arrow {
       color: var(--muted);
@@ -1229,10 +1286,17 @@
         margin-bottom: 0;
       }
 
-      .export-field input[type="date"] {
-        height: 48px;
-        font-size: 1rem; /* prevent iOS zoom */
+      .date-picker-btn { height: 48px; font-size: 1rem; }
+
+      #date-picker-popover {
+        width: calc(100vw - 2rem);
+        max-width: 340px;
+        top: 50% !important;
+        left: 50% !important;
+        transform: translate(-50%, -50%) !important;
       }
+
+      .dpc-day { min-height: 40px; font-size: 0.88rem; }
 
       .export-modal-actions {
         flex-direction: column;
@@ -2189,9 +2253,7 @@
     // ── Export modal ───────────────────────────────────────────────
 
     function openExportModal() {
-      document.getElementById("export-from").value = "";
-      document.getElementById("export-to").value   = "";
-      updateExportSummary();
+      clearExportDates();
       document.getElementById("export-modal-backdrop").classList.add("open");
     }
 
@@ -2202,6 +2264,10 @@
     function clearExportDates() {
       document.getElementById("export-from").value = "";
       document.getElementById("export-to").value   = "";
+      document.getElementById("dp-from-btn").classList.remove("has-value");
+      document.getElementById("dp-to-btn").classList.remove("has-value");
+      document.getElementById("dp-from-display").textContent = "From date";
+      document.getElementById("dp-to-display").textContent   = "To date";
       updateExportSummary();
     }
 
@@ -2229,8 +2295,8 @@
       const clearBtn = document.getElementById("export-date-clear");
       const { from, to } = getExportDateRange();
 
-      fromEl.classList.toggle("active", !!from);
-      toEl.classList.toggle("active",   !!to);
+      document.getElementById("dp-from-btn").classList.toggle("has-value", !!from);
+      document.getElementById("dp-to-btn").classList.toggle("has-value",   !!to);
       clearBtn.classList.toggle("visible", !!(from || to));
 
       const filtered = getExportRows();
@@ -2300,6 +2366,125 @@
       if (e.target === this) closeExportModal();
     });
 
+    // ── Custom date picker ─────────────────────────────────────────
+    let dpField = null;
+    let dpYear  = new Date().getFullYear();
+    let dpMonth = new Date().getMonth();
+
+    const MONTHS = ["January","February","March","April","May","June",
+                    "July","August","September","October","November","December"];
+
+    function openDatePicker(field) {
+      dpField = field;
+      const current = document.getElementById(`export-${field}`).value;
+      if (current) {
+        const [y, m] = current.split("-");
+        dpYear  = parseInt(y);
+        dpMonth = parseInt(m) - 1;
+      } else {
+        const now = new Date();
+        dpYear  = now.getFullYear();
+        dpMonth = now.getMonth();
+      }
+      renderDpCalendar();
+
+      const pop  = document.getElementById("date-picker-popover");
+      pop.classList.add("open");
+
+      if (window.innerWidth > 520) {
+        const btn  = document.getElementById(`dp-${field}-btn`);
+        const rect = btn.getBoundingClientRect();
+        const popW = 296;
+        let left = rect.left;
+        if (left + popW > window.innerWidth - 16) left = window.innerWidth - popW - 16;
+        pop.style.top       = (rect.bottom + 6) + "px";
+        pop.style.left      = left + "px";
+        pop.style.transform = "none";
+      }
+    }
+
+    function closeDatePicker() {
+      document.getElementById("date-picker-popover").classList.remove("open");
+      dpField = null;
+    }
+
+    function dpPrevMonth() {
+      dpMonth--;
+      if (dpMonth < 0) { dpMonth = 11; dpYear--; }
+      renderDpCalendar();
+    }
+
+    function dpNextMonth() {
+      dpMonth++;
+      if (dpMonth > 11) { dpMonth = 0; dpYear++; }
+      renderDpCalendar();
+    }
+
+    function renderDpCalendar() {
+      document.getElementById("dpc-month-label").textContent = `${MONTHS[dpMonth]} ${dpYear}`;
+
+      const grid      = document.getElementById("dpc-grid");
+      grid.innerHTML  = "";
+
+      const fromVal   = document.getElementById("export-from").value;
+      const toVal     = document.getElementById("export-to").value;
+      const todayStr  = localIsoToday();
+      const startDay  = new Date(dpYear, dpMonth, 1).getDay();
+      const lastDay   = new Date(dpYear, dpMonth + 1, 0).getDate();
+
+      // Pad before
+      for (let i = 0; i < startDay; i++) {
+        const d = new Date(dpYear, dpMonth, 1 - (startDay - i));
+        grid.appendChild(makeDpDay(d, true, fromVal, toVal, todayStr));
+      }
+      // Current month
+      for (let d = 1; d <= lastDay; d++) {
+        grid.appendChild(makeDpDay(new Date(dpYear, dpMonth, d), false, fromVal, toVal, todayStr));
+      }
+      // Pad after
+      const total = startDay + lastDay;
+      const tail  = total % 7 === 0 ? 0 : 7 - (total % 7);
+      for (let i = 1; i <= tail; i++) {
+        grid.appendChild(makeDpDay(new Date(dpYear, dpMonth + 1, i), true, fromVal, toVal, todayStr));
+      }
+    }
+
+    function localIsoToday() {
+      const t = new Date();
+      return `${t.getFullYear()}-${pad2(t.getMonth()+1)}-${pad2(t.getDate())}`;
+    }
+
+    function pad2(n) { return String(n).padStart(2, "0"); }
+
+    function makeDpDay(date, other, fromVal, toVal, todayStr) {
+      const iso = `${date.getFullYear()}-${pad2(date.getMonth()+1)}-${pad2(date.getDate())}`;
+      const btn = document.createElement("button");
+      btn.type        = "button";
+      btn.textContent = date.getDate();
+      btn.className   = "dpc-day";
+      if (other)           btn.classList.add("other-month");
+      if (iso === todayStr) btn.classList.add("today");
+      if (iso === fromVal || iso === toVal) btn.classList.add("selected");
+      btn.addEventListener("click", () => dpSelectDay(iso));
+      return btn;
+    }
+
+    function dpSelectDay(iso) {
+      document.getElementById(`export-${dpField}`).value = iso;
+      const [y, m, d] = iso.split("-");
+      document.getElementById(`dp-${dpField}-display`).textContent = `${y}/${m}/${d}`;
+      document.getElementById(`dp-${dpField}-btn`).classList.add("has-value");
+      closeDatePicker();
+      updateExportSummary();
+    }
+
+    // Close calendar on outside click/tap
+    document.addEventListener("click", e => {
+      const pop = document.getElementById("date-picker-popover");
+      if (!pop.classList.contains("open")) return;
+      if (!pop.contains(e.target) && !e.target.closest(".date-picker-btn")) closeDatePicker();
+    });
+
     // ── Scroll mirror (top scrollbar for records table) ──────────────
     (function() {
       const mirror = document.getElementById("records-scroll-mirror");
@@ -2362,21 +2547,35 @@
       <div class="export-modal-body">
         <div class="export-date-range">
           <div class="export-field">
-            <label for="export-from">Registered From</label>
-            <div class="export-input-wrap">
-              <input type="date" id="export-from" oninput="updateExportSummary()">
-              <span class="export-input-placeholder">From date</span>
-            </div>
+            <label>Registered From</label>
+            <input type="hidden" id="export-from">
+            <button type="button" class="date-picker-btn" id="dp-from-btn" onclick="openDatePicker('from')">
+              <span id="dp-from-display">From date</span>
+            </button>
           </div>
           <span class="export-arrow">→</span>
           <div class="export-field">
-            <label for="export-to">Registered To</label>
-            <div class="export-input-wrap">
-              <input type="date" id="export-to" oninput="updateExportSummary()">
-              <span class="export-input-placeholder">To date</span>
-            </div>
+            <label>Registered To</label>
+            <input type="hidden" id="export-to">
+            <button type="button" class="date-picker-btn" id="dp-to-btn" onclick="openDatePicker('to')">
+              <span id="dp-to-display">To date</span>
+            </button>
           </div>
           <button id="export-date-clear" onclick="clearExportDates()" title="Clear dates">×</button>
+        </div>
+
+        <!-- Custom calendar popover -->
+        <div id="date-picker-popover">
+          <div class="dpc-header">
+            <button type="button" class="dpc-nav" onclick="dpPrevMonth()">‹</button>
+            <span class="dpc-month-label" id="dpc-month-label"></span>
+            <button type="button" class="dpc-nav" onclick="dpNextMonth()">›</button>
+          </div>
+          <div class="dpc-weekdays">
+            <span>Su</span><span>Mo</span><span>Tu</span>
+            <span>We</span><span>Th</span><span>Fr</span><span>Sa</span>
+          </div>
+          <div class="dpc-grid" id="dpc-grid"></div>
         </div>
 
         <p class="export-summary" id="export-summary"></p>
