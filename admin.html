@@ -846,6 +846,16 @@
         border-radius: 14px;
       }
 
+      /* Session overlay — tablet */
+      .session-card {
+        max-width: 90%;
+        padding: 2rem 1.5rem 1.75rem;
+      }
+
+      .session-timer {
+        font-size: 2.5rem;
+      }
+
       /* Top bar stacks vertically */
       .top-bar {
         flex-direction: column;
@@ -953,6 +963,34 @@
 
       .login-body .btn-signin {
         height: 50px;
+      }
+
+      /* Session overlay — mobile */
+      .session-card {
+        max-width: 100%;
+        border-radius: 16px;
+        padding: 1.75rem 1.25rem 1.5rem;
+      }
+
+      .session-card h2 {
+        font-size: 1.3rem;
+      }
+
+      .session-timer {
+        font-size: 2.2rem;
+        margin-bottom: 1.5rem;
+      }
+
+      .session-actions {
+        flex-direction: column;
+        gap: 0.6rem;
+      }
+
+      .btn-extend,
+      .btn-session-logout {
+        width: 100%;
+        padding: 0.85rem 1rem;
+        font-size: 0.9rem;
       }
 
       /* Date filter becomes its own line, full width */
@@ -1170,8 +1208,44 @@
     .btn-confirm-export:disabled { opacity: 0.4; cursor: not-allowed; }
 
     @media (max-width: 520px) {
-      .export-date-range { flex-wrap: wrap; }
+      .export-modal {
+        border-radius: 14px;
+      }
+
+      .export-modal-body {
+        padding: 1.25rem 1rem;
+      }
+
+      .export-date-range {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 0.75rem;
+      }
+
       .export-arrow { display: none; }
+
+      #export-date-clear {
+        align-self: flex-end;
+        margin-bottom: 0;
+      }
+
+      .export-field input[type="date"] {
+        height: 48px;
+        font-size: 1rem; /* prevent iOS zoom */
+      }
+
+      .export-modal-actions {
+        flex-direction: column;
+        gap: 0.6rem;
+      }
+
+      .btn-export-all,
+      .btn-confirm-export {
+        width: 100%;
+        height: 48px;
+        font-size: 0.88rem;
+        justify-content: center;
+      }
     }
 
     /* ── Dashboard footer ── */
@@ -1190,6 +1264,106 @@
     }
 
     body.logged-in .dashboard-footer { display: block; }
+
+    /* ── Session timeout overlay ── */
+    #session-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      z-index: 9999;
+      background: hsla(220, 55%, 8%, 0.88);
+      backdrop-filter: blur(6px);
+      align-items: center;
+      justify-content: center;
+      padding: 1rem;
+    }
+    #session-overlay.active { display: flex; }
+
+    .session-card {
+      width: 100%;
+      max-width: 360px;
+      background: hsl(220, 45%, 15%);
+      border: 1px solid hsla(40, 70%, 55%, 0.2);
+      border-radius: 20px;
+      box-shadow: 0 32px 80px hsla(220, 55%, 5%, 0.7);
+      padding: 2.5rem 2rem 2rem;
+      text-align: center;
+      animation: floatIn 0.35s ease-out;
+    }
+
+    .session-icon {
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
+      background: hsla(0, 70%, 58%, 0.15);
+      border: 1px solid hsla(0, 70%, 58%, 0.35);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.5rem;
+      margin: 0 auto 1.25rem;
+    }
+
+    .session-card h2 {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.5rem;
+      color: var(--cream);
+      margin-bottom: 0.5rem;
+    }
+
+    .session-card p {
+      font-size: 0.85rem;
+      color: var(--muted);
+      margin-bottom: 1.75rem;
+      line-height: 1.5;
+    }
+
+    .session-timer {
+      font-size: 3rem;
+      font-weight: 700;
+      font-variant-numeric: tabular-nums;
+      color: var(--gold);
+      letter-spacing: 0.05em;
+      margin-bottom: 1.75rem;
+      line-height: 1;
+    }
+
+    .session-timer.urgent { color: var(--red); }
+
+    .session-actions {
+      display: flex;
+      gap: 0.75rem;
+    }
+
+    .btn-extend {
+      flex: 1;
+      padding: 0.75rem 1rem;
+      border-radius: 10px;
+      border: none;
+      background: var(--gold);
+      color: hsl(220, 55%, 10%);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.85rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: opacity 0.15s, transform 0.15s;
+    }
+    .btn-extend:hover { opacity: 0.88; transform: translateY(-1px); }
+
+    .btn-session-logout {
+      flex: 1;
+      padding: 0.75rem 1rem;
+      border-radius: 10px;
+      border: 1px solid hsla(0, 70%, 58%, 0.45);
+      background: transparent;
+      color: var(--red);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: border-color 0.15s, background 0.15s;
+    }
+    .btn-session-logout:hover { background: hsla(0, 70%, 58%, 0.1); border-color: var(--red); }
   </style>
 </head>
 <body>
@@ -1472,18 +1646,25 @@
       document.getElementById("dashboard").style.display     = "block";
       document.body.classList.add("logged-in");
 
+      saveSession();
       updateStats();
       renderTable();
       updateTrashBtn();
+      resetInactivityTimer();
     }
 
     function logout() {
+      clearTimeout(inactivityTimer);
+      clearTimeout(warningTimer);
+      clearInterval(countdownInterval);
+      clearSession();
       username  = "";
       password  = "";
       allData   = [];
       trashData = [];
       selectedRecords.clear();
       selectedTrash.clear();
+      document.getElementById("session-overlay").classList.remove("active");
       document.getElementById("login-screen").style.display = "flex";
       document.getElementById("dashboard").style.display    = "none";
       document.body.classList.remove("logged-in");
@@ -1493,6 +1674,103 @@
       // Reset tab to Records for next login
       switchTab("records");
     }
+
+    // ── Session persistence ────────────────────────────────────────
+    const SESSION_KEY     = "hnv_admin_session";
+    const INACTIVITY_MS   = 60 * 60 * 1000; // 1 hour
+    const WARNING_MS      = 60 * 1000;       // 1-minute warning
+
+    let inactivityTimer  = null;
+    let warningTimer     = null;
+    let countdownInterval = null;
+
+    function saveSession() {
+      localStorage.setItem(SESSION_KEY, JSON.stringify({
+        u: btoa(username),
+        p: btoa(password)
+      }));
+    }
+
+    function clearSession() {
+      localStorage.removeItem(SESSION_KEY);
+    }
+
+    function resetInactivityTimer() {
+      clearTimeout(inactivityTimer);
+      clearTimeout(warningTimer);
+      // Only track inactivity if logged in
+      if (!username) return;
+      inactivityTimer = setTimeout(showSessionWarning, INACTIVITY_MS - WARNING_MS);
+    }
+
+    function showSessionWarning() {
+      document.getElementById("session-overlay").classList.add("active");
+      let remaining = 60;
+      updateCountdownDisplay(remaining);
+      countdownInterval = setInterval(() => {
+        remaining--;
+        updateCountdownDisplay(remaining);
+        if (remaining <= 0) {
+          clearInterval(countdownInterval);
+          logout();
+        }
+      }, 1000);
+    }
+
+    function updateCountdownDisplay(secs) {
+      const el = document.getElementById("session-countdown");
+      const m  = Math.floor(secs / 60);
+      const s  = secs % 60;
+      el.textContent = `${m}:${s.toString().padStart(2, "0")}`;
+      el.classList.toggle("urgent", secs <= 15);
+    }
+
+    function extendSession() {
+      clearInterval(countdownInterval);
+      document.getElementById("session-overlay").classList.remove("active");
+      resetInactivityTimer();
+    }
+
+    // Track user activity
+    ["mousemove", "mousedown", "keydown", "touchstart", "scroll"].forEach(evt => {
+      document.addEventListener(evt, () => {
+        if (document.getElementById("session-overlay").classList.contains("active")) return;
+        resetInactivityTimer();
+      }, { passive: true });
+    });
+
+    // Auto-login on page load if session exists
+    (async function restoreSession() {
+      const raw = localStorage.getItem(SESSION_KEY);
+      if (!raw) return;
+      let saved;
+      try { saved = JSON.parse(raw); } catch { clearSession(); return; }
+      const usr = atob(saved.u);
+      const pwd = atob(saved.p);
+
+      const res = await fetch(`${API_URL}/admin/registrations`, {
+        headers: { "X-Admin-Username": usr, "X-Admin-Password": pwd }
+      });
+      if (!res.ok) { clearSession(); return; }
+
+      username = usr;
+      password = pwd;
+      allData  = await res.json();
+
+      const trashRes = await fetch(`${API_URL}/admin/trash`, {
+        headers: { "X-Admin-Username": usr, "X-Admin-Password": pwd }
+      });
+      trashData = trashRes.ok ? await trashRes.json() : [];
+
+      document.getElementById("login-screen").style.display = "none";
+      document.getElementById("dashboard").style.display    = "block";
+      document.body.classList.add("logged-in");
+
+      updateStats();
+      renderTable();
+      updateTrashBtn();
+      resetInactivityTimer();
+    })();
 
     // ── Stats ──────────────────────────────────────────────────────
     function updateStats() {
@@ -2052,6 +2330,20 @@
       }
     })();
   </script>
+
+  <!-- ── Session timeout overlay ── -->
+  <div id="session-overlay">
+    <div class="session-card">
+      <div class="session-icon">⏱</div>
+      <h2>Still there?</h2>
+      <p>You've been inactive for a while. The session will close automatically in:</p>
+      <div class="session-timer" id="session-countdown">1:00</div>
+      <div class="session-actions">
+        <button class="btn-extend" onclick="extendSession()">Extend Session</button>
+        <button class="btn-session-logout" onclick="logout()">Log Out</button>
+      </div>
+    </div>
+  </div>
 
   <!-- ── Export modal ── -->
   <div class="export-modal-backdrop" id="export-modal-backdrop">
