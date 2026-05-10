@@ -30,6 +30,10 @@
     }
 
     /* ── Login screen ── */
+    /* Hide everything until session check completes */
+    body.app-loading #login-screen,
+    body.app-loading #dashboard { visibility: hidden; }
+
     #login-screen {
       display: flex;
       align-items: center;
@@ -1366,7 +1370,7 @@
     .btn-session-logout:hover { background: hsla(0, 70%, 58%, 0.1); border-color: var(--red); }
   </style>
 </head>
-<body>
+<body class="app-loading">
 
   <!-- ── Login ── -->
   <div id="login-screen">
@@ -1742,16 +1746,23 @@
     // Auto-login on page load if session exists
     (async function restoreSession() {
       const raw = localStorage.getItem(SESSION_KEY);
-      if (!raw) return;
+      if (!raw) {
+        document.body.classList.remove("app-loading");
+        return;
+      }
       let saved;
-      try { saved = JSON.parse(raw); } catch { clearSession(); return; }
+      try { saved = JSON.parse(raw); } catch { clearSession(); document.body.classList.remove("app-loading"); return; }
       const usr = atob(saved.u);
       const pwd = atob(saved.p);
 
       const res = await fetch(`${API_URL}/admin/registrations`, {
         headers: { "X-Admin-Username": usr, "X-Admin-Password": pwd }
       });
-      if (!res.ok) { clearSession(); return; }
+      if (!res.ok) {
+        clearSession();
+        document.body.classList.remove("app-loading");
+        return;
+      }
 
       username = usr;
       password = pwd;
@@ -1765,6 +1776,7 @@
       document.getElementById("login-screen").style.display = "none";
       document.getElementById("dashboard").style.display    = "block";
       document.body.classList.add("logged-in");
+      document.body.classList.remove("app-loading");
 
       updateStats();
       renderTable();
