@@ -30,10 +30,6 @@
     }
 
     /* ── Login screen ── */
-    /* Hide everything until session check completes */
-    body.app-loading #login-screen,
-    body.app-loading #dashboard { visibility: hidden; }
-
     #login-screen {
       display: flex;
       align-items: center;
@@ -1370,7 +1366,7 @@
     .btn-session-logout:hover { background: hsla(0, 70%, 58%, 0.1); border-color: var(--red); }
   </style>
 </head>
-<body class="app-loading">
+<body>
 
   <!-- ── Login ── -->
   <div id="login-screen">
@@ -1746,37 +1742,35 @@
     // Auto-login on page load if session exists
     (async function restoreSession() {
       const raw = localStorage.getItem(SESSION_KEY);
-      if (!raw) {
-        document.body.classList.remove("app-loading");
-        return;
-      }
+      if (!raw) return;
+
       let saved;
-      try { saved = JSON.parse(raw); } catch { clearSession(); document.body.classList.remove("app-loading"); return; }
+      try { saved = JSON.parse(raw); } catch { clearSession(); return; }
       const usr = atob(saved.u);
       const pwd = atob(saved.p);
+
+      // Show dashboard immediately (optimistic), data loads in background
+      username = usr;
+      password = pwd;
+      document.getElementById("login-screen").style.display = "none";
+      document.getElementById("dashboard").style.display    = "block";
+      document.body.classList.add("logged-in");
 
       const res = await fetch(`${API_URL}/admin/registrations`, {
         headers: { "X-Admin-Username": usr, "X-Admin-Password": pwd }
       });
       if (!res.ok) {
         clearSession();
-        document.body.classList.remove("app-loading");
+        logout();
         return;
       }
 
-      username = usr;
-      password = pwd;
-      allData  = await res.json();
+      allData = await res.json();
 
       const trashRes = await fetch(`${API_URL}/admin/trash`, {
         headers: { "X-Admin-Username": usr, "X-Admin-Password": pwd }
       });
       trashData = trashRes.ok ? await trashRes.json() : [];
-
-      document.getElementById("login-screen").style.display = "none";
-      document.getElementById("dashboard").style.display    = "block";
-      document.body.classList.add("logged-in");
-      document.body.classList.remove("app-loading");
 
       updateStats();
       renderTable();
