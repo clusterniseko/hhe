@@ -1741,29 +1741,30 @@
 
     // ── Session persistence ────────────────────────────────────────
     const SESSION_KEY     = "hnv_admin_session";
-    const INACTIVITY_MS   = 60 * 60 * 1000; // 1 hour
-    const WARNING_MS      = 60 * 1000;       // 1-minute warning
+    const SESSION_MAX_AGE = 8 * 60 * 60 * 1000; // 8 hours
+    const INACTIVITY_MS   = 60 * 60 * 1000;      // 1 hour
+    const WARNING_MS      = 60 * 1000;            // 1-minute warning
 
     let inactivityTimer  = null;
     let warningTimer     = null;
     let countdownInterval = null;
 
     function saveSession() {
-      localStorage.setItem(SESSION_KEY, JSON.stringify({
-        u: btoa(username),
-        p: btoa(password)
-      }));
+      sessionStorage.setItem(SESSION_KEY, btoa(username));
+      sessionStorage.setItem('hnv_admin_pass', btoa(password));
+      sessionStorage.setItem('hnv_admin_login_time', Date.now());
     }
 
     function clearSession() {
-      localStorage.removeItem(SESSION_KEY);
+      sessionStorage.removeItem(SESSION_KEY);
+      sessionStorage.removeItem('hnv_admin_pass');
+      sessionStorage.removeItem('hnv_admin_login_time');
     }
 
     function resetInactivityTimer() {
       clearTimeout(inactivityTimer);
       clearTimeout(warningTimer);
-      // Only track inactivity if logged in
-      if (!username) return;
+      if (!sessionStorage.getItem(SESSION_KEY)) return;
       inactivityTimer = setTimeout(showSessionWarning, INACTIVITY_MS - WARNING_MS);
     }
 
@@ -1796,51 +1797,47 @@
     }
 
     // Track user activity
-    ["mousemove", "mousedown", "keydown", "touchstart", "scroll"].forEach(evt => {
+    ["mousemove", "mousedown", "keydown", "touchstart", "scroll", "click"].forEach(evt => {
       document.addEventListener(evt, () => {
-        if (document.getElementById("session-overlay").classList.contains("active")) return;
-        resetInactivityTimer();
+        if (sessionStorage.getItem(SESSION_KEY)) resetInactivityTimer();
       }, { passive: true });
     });
 
-    // Auto-login on page load if session exists
-    (async function restoreSession() {
-      const raw = localStorage.getItem(SESSION_KEY);
-      if (!raw) return;
+    // Restore session on reload if within max age
+    window.addEventListener('load', () => {
+      const navEntry = performance.getEntriesByType('navigation')[0];
+      const isReload = navEntry ? navEntry.type === 'reload' : performance.navigation.type === 1;
 
-      let saved;
-      try { saved = JSON.parse(raw); } catch { clearSession(); return; }
-      const usr = atob(saved.u);
-      const pwd = atob(saved.p);
+      const savedUsr  = sessionStorage.getItem(SESSION_KEY);
+      const savedPwd  = sessionStorage.getItem('hnv_admin_pass');
+      const loginTime = parseInt(sessionStorage.getItem('hnv_admin_login_time') || '0', 10);
+      const notExpired = loginTime && (Date.now() - loginTime < SESSION_MAX_AGE);
 
-      // Show dashboard immediately (optimistic), data loads in background
-      username = usr;
-      password = pwd;
-      document.getElementById("login-screen").style.display = "none";
-      document.getElementById("dashboard").style.display    = "block";
-      document.body.classList.add("logged-in");
-
-      const res = await fetch(`${API_URL}/admin/registrations`, {
-        headers: { "X-Admin-Username": usr, "X-Admin-Password": pwd }
-      });
-      if (!res.ok) {
+      if (savedUsr && savedPwd && notExpired && isReload) {
+        username = atob(savedUsr);
+        password = atob(savedPwd);
+        document.getElementById("login-screen").style.display = "none";
+        document.getElementById("dashboard").style.display    = "block";
+        document.body.classList.add("logged-in");
+        (async () => {
+          const res = await fetch(`${API_URL}/admin/registrations`, {
+            headers: { "X-Admin-Username": username, "X-Admin-Password": password }
+          });
+          if (!res.ok) { clearSession(); logout(); return; }
+          allData = await res.json();
+          const trashRes = await fetch(`${API_URL}/admin/trash`, {
+            headers: { "X-Admin-Username": username, "X-Admin-Password": password }
+          });
+          trashData = trashRes.ok ? await trashRes.json() : [];
+          updateStats();
+          renderTable();
+          updateTrashBtn();
+          resetInactivityTimer();
+        })();
+      } else if (!isReload) {
         clearSession();
-        logout();
-        return;
       }
-
-      allData = await res.json();
-
-      const trashRes = await fetch(`${API_URL}/admin/trash`, {
-        headers: { "X-Admin-Username": usr, "X-Admin-Password": pwd }
-      });
-      trashData = trashRes.ok ? await trashRes.json() : [];
-
-      updateStats();
-      renderTable();
-      updateTrashBtn();
-      resetInactivityTimer();
-    })();
+    });
 
     // ── Stats ──────────────────────────────────────────────────────
     function updateStats() {
