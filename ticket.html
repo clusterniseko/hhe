@@ -44,14 +44,12 @@
       font-size: 0.875rem;
       margin-top: 1.5rem;
     }
-    /* Estado de carga al usar ticket */
     #ticket-view .loading-msg {
       color: hsl(40, 60%, 65%);
       font-size: 0.875rem;
       margin-top: 1.5rem;
       display: none;
     }
-    /* Error */
     .ticket-error {
       background: hsla(0, 75%, 55%, 0.12);
       border: 1px solid hsla(0, 75%, 55%, 0.4);
@@ -62,9 +60,7 @@
       font-size: 0.875rem;
       display: none;
     }
-    #gracias {
-      display: none;
-    }
+    #gracias { display: none; }
     #gracias h1 {
       font-size: 3.5rem;
       font-weight: 700;
@@ -86,47 +82,17 @@
       from { opacity: 0; transform: translateY(20px); }
       to { opacity: 1; transform: translateY(0); }
     }
-
-    /* ── Mobile (max 480px) ── */
     @media (max-width: 480px) {
-      body {
-        padding: 1.5rem 1rem;
-        align-items: flex-start;
-        padding-top: 3rem;
-      }
-
-      .wrapper {
-        max-width: 100%;
-      }
-
-      .hotel-name {
-        font-size: 0.75rem;
-        letter-spacing: 0.2em;
-        margin-bottom: 1.5rem;
-      }
-
-      #ticket-view img {
-        width: 220px;
-      }
-
-      #gracias h1 {
-        font-size: 2.75rem;
-      }
-
-      #gracias .nombre {
-        font-size: 1rem;
-      }
+      body { padding: 1.5rem 1rem; align-items: flex-start; padding-top: 3rem; }
+      .wrapper { max-width: 100%; }
+      .hotel-name { font-size: 0.75rem; letter-spacing: 0.2em; margin-bottom: 1.5rem; }
+      #ticket-view img { width: 220px; }
+      #gracias h1 { font-size: 2.75rem; }
+      #gracias .nombre { font-size: 1rem; }
     }
-
-    /* ── Small phones (max 360px) ── */
     @media (max-width: 360px) {
-      #ticket-view img {
-        width: 180px;
-      }
-
-      #gracias h1 {
-        font-size: 2.25rem;
-      }
+      #ticket-view img { width: 180px; }
+      #gracias h1 { font-size: 2.25rem; }
     }
   </style>
 </head>
@@ -149,35 +115,29 @@
   </div>
 
   <script>
-    // ─────────────────────────────────────────────────────────────────
-    // 🔧 CONFIGURACIÓN — Debe coincidir con el API_URL de index.html
-    // ─────────────────────────────────────────────────────────────────
     const API_URL = "https://hhe-production.up.railway.app";
 
-    // ── Thank-you messages per language ───────────────────────────────
     const thankYou = {
-      en: { heading: "Thank\nYou",       sub: "We hope you enjoy your stay." },
+      en: { heading: "Thank\nYou",        sub: "We hope you enjoy your stay." },
       ja: { heading: "ありがとう\nございます", sub: "ご滞在をお楽しみください。" },
-      ko: { heading: "감사합니다",           sub: "즐거운 숙박이 되시길 바랍니다." },
-      zh: { heading: "谢谢\n您",            sub: "祝您入住愉快。" },
-      fr: { heading: "Merci\nBeaucoup",   sub: "Nous espérons que vous profiterez de votre séjour." },
-      es: { heading: "Muchas\nGracias",   sub: "Esperamos que disfrute su estancia." },
+      ko: { heading: "감사합니다",            sub: "즐거운 숙박이 되시길 바랍니다." },
+      zh: { heading: "谢谢\n您",             sub: "祝您入住愉快。" },
+      fr: { heading: "Merci\nBeaucoup",    sub: "Nous espérons que vous profiterez de votre séjour." },
+      es: { heading: "Muchas\nGracias",    sub: "Esperamos que disfrute su estancia." },
     };
 
-    const params  = new URLSearchParams(window.location.search);
-    let nombre    = params.get("nombre");
-    let correo    = params.get("correo");
-    let room      = params.get("room");
-    let lang      = params.get("lang") || "en";
+    const params = new URLSearchParams(window.location.search);
+    let nombre   = params.get("nombre");
+    let correo   = params.get("correo");
+    let lang     = params.get("lang") || "en";
 
-    // Modo demo si faltan parámetros
-    if (!nombre || !correo || !room) {
-      nombre = "Usuario Demo";
+    // Demo mode only if BOTH nombre and correo are missing
+    if (!nombre || !correo) {
+      nombre = "Demo User";
       correo = "demo@local.com";
-      room   = "000";
     }
 
-    // ── localStorage helpers ──────────────────────────────────────────
+    // ── localStorage helpers ──
     function getUsedTickets() {
       try { return JSON.parse(localStorage.getItem("hnv_used_tickets") || "[]"); }
       catch { return []; }
@@ -191,16 +151,13 @@
       const list = getUsedTickets();
       const lowerName  = name.toLowerCase();
       const lowerEmail = email.toLowerCase();
-      // Block if EITHER name OR email was already used
       return list.some(r => r.name === lowerName || r.email === lowerEmail);
     }
 
-    // Al cargar, verificar si este ticket ya fue usado (localStorage primero)
     if (isTicketAlreadyUsed(nombre, correo)) {
       mostrarGracias();
       bloquearBack();
     } else {
-      // También verificar con el servidor como respaldo
       checkTicketStatusServer();
     }
 
@@ -218,22 +175,18 @@
       }
     }
 
-    // ── Lógica de doble click ──
     let confirmado = false;
 
     document.getElementById("ticket-img").addEventListener("click", async function() {
-
-      // Primer click — confirmar intención
       if (!confirmado) {
         document.getElementById("hint-text").textContent = "Click again to confirm";
         confirmado = true;
         return;
       }
 
-      // Segundo click — usar el ticket
-      const img = document.getElementById("ticket-img");
+      const img        = document.getElementById("ticket-img");
       const loadingMsg = document.getElementById("loading-msg");
-      const errorEl   = document.getElementById("ticket-error");
+      const errorEl    = document.getElementById("ticket-error");
 
       img.style.pointerEvents = "none";
       img.style.opacity = "0.6";
@@ -241,7 +194,6 @@
       loadingMsg.style.display = "block";
       errorEl.style.display = "none";
 
-      // Check localStorage again before server call (race condition guard)
       if (isTicketAlreadyUsed(nombre, correo)) {
         markTicketUsed(nombre, correo);
         mostrarGracias();
@@ -263,12 +215,11 @@
           mostrarGracias();
           bloquearBack();
         } else if (res.status === 409) {
-          // Ya usado en el servidor
           markTicketUsed(nombre, correo);
           mostrarGracias();
           bloquearBack();
         } else {
-          throw new Error(data.error || "Error desconocido");
+          throw new Error(data.error || "Unknown error");
         }
 
       } catch (err) {
@@ -281,8 +232,6 @@
         confirmado = false;
       }
     });
-
-    // ── Funciones ──
 
     function mostrarGracias() {
       document.getElementById("ticket-view").style.display = "none";
