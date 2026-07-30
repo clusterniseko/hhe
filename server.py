@@ -1,6 +1,6 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS
-import psycopg2, psycopg2.extras, os
+import psycopg2, psycopg2.extras, os, traceback
 
 app = Flask(__name__)
 
@@ -17,11 +17,24 @@ def get_db():
     return psycopg2.connect(DATABASE_URL)
 
 
+def run_sql(cur, label, sql):
+    """Execute a SQL statement, printing errors without raising."""
+    try:
+        cur.execute(sql)
+    except Exception as e:
+        print(f"[init_db] WARNING — step '{label}' failed: {e}")
+
+
 def init_db():
+    if not DATABASE_URL:
+        print("[init_db] ERROR — DATABASE_URL is not set. Skipping DB init.")
+        return
+
     with get_db() as con:
         with con.cursor() as cur:
+
             # 1. Create table if it doesn't exist
-            cur.execute("""
+            run_sql(cur, "create table", """
                 CREATE TABLE IF NOT EXISTS registrations (
                     id          SERIAL PRIMARY KEY,
                     first_name  TEXT    NOT NULL,
@@ -36,9 +49,10 @@ def init_db():
                     created_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                 )
             """)
+            con.commit()
 
             # 2. Add deleted / deleted_at columns to existing installs
-            cur.execute("""
+            run_sql(cur, "add deleted cols", """
                 DO $$
                 BEGIN
                     IF NOT EXISTS (
@@ -55,9 +69,10 @@ def init_db():
                     END IF;
                 END $$;
             """)
+            con.commit()
 
-            # 3. Make room column nullable (migration for existing installs)
-            cur.execute("""
+            # 3. Make room column nullable (existing DB has it NOT NULL)
+            run_sql(cur, "room nullable", """
                 DO $$
                 BEGIN
                     IF EXISTS (
@@ -69,9 +84,10 @@ def init_db():
                     END IF;
                 END $$;
             """)
+            con.commit()
 
-            # 4. Drop old combined constraint if it exists
-            cur.execute("""
+            # 4. Drop old combined unique constraint if it exists
+            run_sql(cur, "drop old constraint", """
                 DO $$
                 BEGIN
                     IF EXISTS (
@@ -83,25 +99,28 @@ def init_db():
                     END IF;
                 END $$;
             """)
+            con.commit()
 
             # 5. Deduplicate by email — keep most recent
-            cur.execute("""
+            run_sql(cur, "dedup email", """
                 DELETE FROM registrations
                 WHERE id NOT IN (
                     SELECT MAX(id) FROM registrations GROUP BY email
                 );
             """)
+            con.commit()
 
             # 6. Deduplicate by (first_name, last_name) — keep most recent
-            cur.execute("""
+            run_sql(cur, "dedup name", """
                 DELETE FROM registrations
                 WHERE id NOT IN (
                     SELECT MAX(id) FROM registrations GROUP BY first_name, last_name
                 );
             """)
+            con.commit()
 
             # 7. Add unique constraints if missing
-            cur.execute("""
+            run_sql(cur, "add unique constraints", """
                 DO $$
                 BEGIN
                     IF NOT EXISTS (
@@ -122,7 +141,9 @@ def init_db():
                     END IF;
                 END $$;
             """)
-        con.commit()
+            con.commit()
+
+    print("[init_db] Done.")
 
 
 # ── Auth helper ────────────────────────────────────────────────────────
@@ -150,7 +171,6 @@ def register():
     try:
         with get_db() as con:
             with con.cursor() as cur:
-                # Duplicate checks exclude soft-deleted records
                 cur.execute(
                     """SELECT id FROM registrations
                        WHERE first_name = %s AND last_name = %s AND deleted = FALSE""",
@@ -406,4 +426,7 @@ if __name__ == "__main__":
     app.run(host="0.0.0.0", port=port)
 
 # Gunicorn entry point
-init_db()
+try:
+    init_db()
+except Exception:
+    traceback.print_exc()
