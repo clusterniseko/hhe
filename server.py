@@ -56,7 +56,21 @@ def init_db():
                 END $$;
             """)
 
-            # 3. Drop old combined constraint if it exists
+            # 3. Make room column nullable (migration for existing installs)
+            cur.execute("""
+                DO $$
+                BEGIN
+                    IF EXISTS (
+                        SELECT 1 FROM information_schema.columns
+                        WHERE table_name='registrations' AND column_name='room'
+                        AND is_nullable = 'NO'
+                    ) THEN
+                        ALTER TABLE registrations ALTER COLUMN room DROP NOT NULL;
+                    END IF;
+                END $$;
+            """)
+
+            # 4. Drop old combined constraint if it exists
             cur.execute("""
                 DO $$
                 BEGIN
@@ -70,7 +84,7 @@ def init_db():
                 END $$;
             """)
 
-            # 4. Deduplicate by email — keep most recent
+            # 5. Deduplicate by email — keep most recent
             cur.execute("""
                 DELETE FROM registrations
                 WHERE id NOT IN (
@@ -78,7 +92,7 @@ def init_db():
                 );
             """)
 
-            # 5. Deduplicate by (first_name, last_name) — keep most recent
+            # 6. Deduplicate by (first_name, last_name) — keep most recent
             cur.execute("""
                 DELETE FROM registrations
                 WHERE id NOT IN (
@@ -86,7 +100,7 @@ def init_db():
                 );
             """)
 
-            # 6. Add unique constraints if missing
+            # 7. Add unique constraints if missing
             cur.execute("""
                 DO $$
                 BEGIN
