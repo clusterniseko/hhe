@@ -391,11 +391,6 @@
 
       <form id="ticketForm">
 
-        <div class="field-group">
-          <label><span data-i18n="room">Room Number</span> <span class="req" data-i18n="required">(Required)</span></label>
-          <input type="number" id="roomNumber" min="1" required>
-        </div>
-
         <div class="field-row">
           <div>
             <label><span data-i18n="firstName">First Name</span> <span class="req" data-i18n="required">(Required)</span></label>
@@ -420,11 +415,6 @@
         <div class="field-group">
           <label><span data-i18n="country">Country / Region</span> <span class="req" data-i18n="required">(Required)</span></label>
           <input type="text" id="country" required>
-        </div>
-
-        <div class="field-group">
-          <label><span data-i18n="zip">ZIP / Postal Code</span> <span class="req" data-i18n="required">(Required)</span></label>
-          <input type="text" id="zip" required>
         </div>
 
         <div class="privacy">
@@ -457,7 +447,7 @@
   </div>
 
   <footer class="site-footer">
-    &copy; 2026 YOB&AIM &middot; All rights reserved
+    &copy; 2026 Niseko Cluster &middot; All rights reserved
   </footer>
 
   <script>
@@ -709,18 +699,9 @@
       const lastName  = document.getElementById("lastName").value.trim();
       const correo    = document.getElementById("correo").value.trim().toLowerCase();
       const phone     = document.getElementById("phone").value.trim();
-      const room      = document.getElementById("roomNumber").value.trim();
       const country   = document.getElementById("country").value.trim();
-      const zip       = document.getElementById("zip").value.trim();
 
-      if (!firstName || !lastName || !correo || !phone || !room || !country || !zip) {
-        errorEl.textContent = t.errorRequired;
-        errorEl.style.display = "block";
-        window.scrollTo({ top: 0, behavior: "smooth" });
-        return;
-      }
-
-      if (parseInt(room, 10) < 1) {
+      if (!firstName || !lastName || !correo || !phone || !country) {
         errorEl.textContent = t.errorRequired;
         errorEl.style.display = "block";
         window.scrollTo({ top: 0, behavior: "smooth" });
@@ -755,7 +736,7 @@
         const res = await fetch(`${API_URL}/register`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ firstName, lastName, email: correo, phone, room, country, zip, lang: currentLang })
+          body: JSON.stringify({ firstName, lastName, email: correo, phone, country, lang: currentLang })
         });
 
         const data = await res.json();
@@ -784,7 +765,6 @@
         window.location.href =
           "ticket.html?nombre=" + encodeURIComponent(nombre) +
           "&correo=" + encodeURIComponent(correo) +
-          "&room=" + encodeURIComponent(room) +
           "&lang=" + encodeURIComponent(currentLang);
 
       } catch (err) {

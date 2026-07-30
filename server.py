@@ -24,13 +24,11 @@ def init_db():
             cur.execute("""
                 CREATE TABLE IF NOT EXISTS registrations (
                     id          SERIAL PRIMARY KEY,
-                    room        TEXT    NOT NULL,
                     first_name  TEXT    NOT NULL,
                     last_name   TEXT    NOT NULL,
                     email       TEXT    NOT NULL,
                     phone       TEXT,
                     country     TEXT,
-                    zip         TEXT,
                     lang        TEXT      DEFAULT 'en',
                     ticket_used BOOLEAN   DEFAULT FALSE,
                     deleted     BOOLEAN   DEFAULT FALSE,
@@ -125,16 +123,14 @@ def check_admin_auth():
 def register():
     data = request.get_json(silent=True) or {}
 
-    room       = str(data.get("room", "")).strip()
     first_name = data.get("firstName", "").strip()
     last_name  = data.get("lastName", "").strip()
     email      = data.get("email", "").strip().lower()
     phone      = data.get("phone", "").strip()
     country    = data.get("country", "").strip()
-    zip_code   = data.get("zip", "").strip()
     lang       = data.get("lang", "en").strip()
 
-    if not room or not first_name or not last_name or not email:
+    if not first_name or not last_name or not email:
         return jsonify({"error": "missing_fields"}), 400
 
     try:
@@ -158,16 +154,16 @@ def register():
 
                 cur.execute(
                     """INSERT INTO registrations
-                       (room, first_name, last_name, email, phone, country, zip, lang)
-                       VALUES (%s, %s, %s, %s, %s, %s, %s, %s)""",
-                    (room, first_name, last_name, email, phone, country, zip_code, lang)
+                       (first_name, last_name, email, phone, country, lang)
+                       VALUES (%s, %s, %s, %s, %s, %s)""",
+                    (first_name, last_name, email, phone, country, lang)
                 )
             con.commit()
     except psycopg2.errors.UniqueViolation as e:
         field = "email" if "email" in str(e) else "name"
         return jsonify({"error": "guest_already_registered", "field": field}), 409
 
-    return jsonify({"success": True, "room": room}), 201
+    return jsonify({"success": True}), 201
 
 
 # ── GET /check-ticket ──────────────────────────────────────────────────
@@ -272,8 +268,8 @@ def admin_registrations():
     with get_db() as con:
         with con.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
             cur.execute(
-                """SELECT room, first_name, last_name, email, phone,
-                          country, zip, lang, ticket_used, created_at
+                """SELECT first_name, last_name, email, phone,
+                          country, lang, ticket_used, created_at
                    FROM registrations
                    WHERE deleted = FALSE
                    ORDER BY created_at DESC"""
@@ -291,8 +287,8 @@ def admin_trash():
     with get_db() as con:
         with con.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
             cur.execute(
-                """SELECT room, first_name, last_name, email, phone,
-                          country, zip, lang, ticket_used, created_at, deleted_at
+                """SELECT first_name, last_name, email, phone,
+                          country, lang, ticket_used, created_at, deleted_at
                    FROM registrations
                    WHERE deleted = TRUE
                    ORDER BY deleted_at DESC"""

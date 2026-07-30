@@ -1510,7 +1510,7 @@
     <div id="records-panel">
     <div class="controls">
       <input class="search-box" type="text" id="search-input"
-        placeholder="Search by name, email, room…" oninput="renderTable()">
+        placeholder="Search by name, email…" oninput="renderTable()">
       <button class="filter-btn active" id="filter-all"     onclick="setFilter('all')">All</button>
       <button class="filter-btn"        id="filter-used"    onclick="setFilter('used')">Used</button>
       <button class="filter-btn"        id="filter-pending" onclick="setFilter('pending')">Pending</button>
@@ -1524,7 +1524,6 @@
       <select class="filter-sort"       id="filter-sort"    onchange="applySort()">
         <option value="created_at_desc">Newest first</option>
         <option value="created_at_asc">Oldest first</option>
-        <option value="room_asc">Room ↑</option>
         <option value="last_name_asc">Name A–Z</option>
       </select>
     </div>
@@ -1551,13 +1550,11 @@
             <th class="col-check">
               <input type="checkbox" class="header-check" id="check-all-records" onclick="toggleAll('records', this)">
             </th>
-            <th onclick="sortBy('room')">Room</th>
             <th onclick="sortBy('first_name')">First name</th>
             <th onclick="sortBy('last_name')">Last name</th>
             <th onclick="sortBy('email')">Email</th>
             <th onclick="sortBy('phone')">Phone</th>
             <th onclick="sortBy('country')">Country</th>
-            <th onclick="sortBy('zip')">ZIP</th>
             <th onclick="sortBy('lang')">Lang</th>
             <th onclick="sortBy('ticket_used')">Ticket</th>
             <th onclick="sortBy('created_at')">Registered at</th>
@@ -1596,7 +1593,6 @@
             <th class="col-check">
               <input type="checkbox" class="header-check" id="check-all-trash" onclick="toggleAll('trash', this)">
             </th>
-            <th>Room</th>
             <th>First name</th>
             <th>Last name</th>
             <th>Email</th>
@@ -1896,7 +1892,6 @@
       const sortMap = {
         "created_at_desc": { key: "created_at", asc: false },
         "created_at_asc":  { key: "created_at", asc: true  },
-        "room_asc":        { key: "room",        asc: true  },
         "last_name_asc":   { key: "last_name",   asc: true  },
       };
       if (sortMap[selectedSort]) {
@@ -1912,7 +1907,7 @@
           if (r.created_at.slice(0, 10) !== dateVal) return false;
         }
         if (query) {
-          const haystack = [r.room, r.first_name, r.last_name, r.email, r.phone, r.country]
+          const haystack = [r.first_name, r.last_name, r.email, r.phone, r.country]
             .join(" ").toLowerCase();
           if (!haystack.includes(query)) return false;
         }
@@ -1934,7 +1929,7 @@
       const tbody = document.getElementById("table-body");
 
       if (rows.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="11" class="empty-state">No registrations found.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="9" class="empty-state">No registrations found.</td></tr>`;
         updateBulkBar("records");
         return;
       }
@@ -1954,13 +1949,11 @@
               <input type="checkbox" class="row-check" data-email="${r.email}"
                      ${checked} onclick="toggleRow('records', '${safeEmail}', this)">
             </td>
-            <td><strong>${r.room || "—"}</strong></td>
             <td>${r.first_name || "—"}</td>
             <td>${r.last_name  || "—"}</td>
             <td class="muted">${r.email   || "—"}</td>
             <td class="muted">${r.phone   || "—"}</td>
             <td class="muted">${r.country || "—"}</td>
-            <td class="muted">${r.zip     || "—"}</td>
             <td class="muted">${(r.lang || "").toUpperCase()}</td>
             <td>${badge}</td>
             <td class="muted">${date}</td>
@@ -2337,13 +2330,12 @@
     }
 
     function downloadCSV(data, filename) {
-      const headers = ["First Name","Last Name","State","Country","Post Code","Email Address","Phone Number"];
+      const headers = ["First Name","Last Name","State","Country","Email Address","Phone Number"];
       const rows = data.map(r => [
         r.first_name,
         r.last_name,
         r.state,
         r.country,
-        r.zip,
         r.email,
         r.phone
       ].map(v => `"${String(v ?? "").replace(/"/g, '""')}"`).join(","));
