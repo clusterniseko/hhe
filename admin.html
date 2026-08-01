@@ -172,18 +172,6 @@
 
     .login-body button:hover { opacity: 0.9; transform: translateY(-1px); }
 
-    .login-footer {
-      text-align: center;
-      padding: 1rem 2rem 1.5rem;
-      background: hsl(220, 45%, 15%);
-      border-top: 1px solid hsla(40, 30%, 60%, 0.08);
-    }
-
-    .login-footer p {
-      font-size: 0.75rem;
-      color: hsla(40, 30%, 80%, 0.45);
-    }
-
     .login-error {
       color: hsl(0, 65%, 50%);
       font-size: 0.82rem;
@@ -1461,10 +1449,6 @@
         <p class="login-error" id="login-error">Incorrect credentials. Try again.</p>
       </div>
 
-      <div class="login-footer">
-        <p>Internal use only &nbsp;·&nbsp; Niseko Cluster</p>
-      </div>
-
     </div>
   </div>
 
@@ -2351,8 +2335,15 @@
     }
 
     // Close export modal on backdrop click
-    document.getElementById("export-modal-backdrop").addEventListener("click", function(e) {
-      if (e.target === this) closeExportModal();
+    // (deferred: the export modal markup is defined later in the HTML,
+    //  after this script tag, so the element doesn't exist yet at this point)
+    document.addEventListener("DOMContentLoaded", function() {
+      const exportBackdrop = document.getElementById("export-modal-backdrop");
+      if (exportBackdrop) {
+        exportBackdrop.addEventListener("click", function(e) {
+          if (e.target === this) closeExportModal();
+        });
+      }
     });
 
     // ── Custom date picker ─────────────────────────────────────────
