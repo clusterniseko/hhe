@@ -238,39 +238,6 @@
     button[type="submit"]:hover { opacity: 0.92; transform: translateY(-1px); }
     button[type="submit"]:active { transform: translateY(0); opacity: 1; }
 
-    /* ── Hotel photo ── */
-    .hotel-photo {
-      margin-top: 1.75rem;
-      border-radius: 16px;
-      overflow: hidden;
-      position: relative;
-      line-height: 0;
-    }
-
-    .hotel-photo img {
-      width: 100%;
-      height: 240px;
-      object-fit: cover;
-      object-position: center 40%;
-      display: block;
-      border-radius: 16px;
-    }
-
-    .hotel-photo-caption {
-      position: absolute;
-      bottom: 0; left: 0; right: 0;
-      padding: 2rem 1.25rem 1rem;
-      background: linear-gradient(to top, hsla(220, 55%, 8%, 0.85), transparent);
-      border-radius: 0 0 16px 16px;
-    }
-
-    .hotel-photo-caption p {
-      font-family: 'Playfair Display', serif;
-      font-size: 0.95rem;
-      font-weight: 600;
-      color: var(--cream);
-      letter-spacing: 0.05em;
-    }
 
     @keyframes floatIn {
       from { opacity: 0; transform: translateY(24px); }
@@ -331,9 +298,6 @@
         font-size: 1rem;
       }
 
-      .hotel-photo img {
-        height: 180px;
-      }
     }
 
     /* ── Small phones (max 380px) ── */
@@ -431,17 +395,6 @@
         <button type="submit" data-i18n="submit">Submit</button>
 
       </form>
-    </div>
-
-    <div class="hotel-photo">
-      <img
-        src="138616-nisekovillage.avif"
-        alt="Hilton Niseko Village with Mount Yotei in winter"
-        onerror="this.closest('.hotel-photo').style.display='none'"
-      >
-      <div class="hotel-photo-caption">
-        <p>Hilton Niseko Village</p>
-      </div>
     </div>
 
   </div>
