@@ -2436,8 +2436,19 @@
     }
 
     // Close export modal on backdrop click
-    document.getElementById("export-modal-backdrop").addEventListener("click", function(e) {
-      if (e.target === this) closeExportModal();
+    // NOTE: #export-modal-backdrop is declared further down in the HTML,
+    // after this <script> block. Calling getElementById() for it here,
+    // at top level, returned null and threw on every page load - which
+    // silently aborted the rest of this script (including the
+    // dpField/dpYear/dpMonth initialization below), leaving the date
+    // picker broken. Wrapping in DOMContentLoaded with a null guard fixes it.
+    document.addEventListener("DOMContentLoaded", () => {
+      const exportBackdrop = document.getElementById("export-modal-backdrop");
+      if (exportBackdrop) {
+        exportBackdrop.addEventListener("click", function(e) {
+          if (e.target === this) closeExportModal();
+        });
+      }
     });
 
     // ── Custom date picker ─────────────────────────────────────────
@@ -2563,15 +2574,17 @@
     // which has "overflow: hidden" for its rounded-corner animation.
     // Browsers still clip fixed-position descendants inside an
     // overflow:hidden ancestor, so the calendar opened but was invisible.
-    // Move it to <body> so it renders unclipped. This script runs at the
-    // bottom of <body>, so the DOM is already parsed - no need to wait
-    // for DOMContentLoaded.
-    (function relocateDatePicker() {
+    // Move it to <body> so it renders unclipped.
+    // NOTE: #date-picker-popover is declared further down in the HTML,
+    // AFTER this </script> tag closes, so it does not exist yet when this
+    // script runs. Must wait for DOMContentLoaded (with a null guard) or
+    // this silently fails to find the element.
+    document.addEventListener("DOMContentLoaded", () => {
       const pop = document.getElementById("date-picker-popover");
       if (pop && pop.parentElement !== document.body) {
         document.body.appendChild(pop);
       }
-    })();
+    });
 
     // ── Scroll mirror (top scrollbar for records table) ──────────────
     (function() {
