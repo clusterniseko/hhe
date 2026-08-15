@@ -2576,7 +2576,7 @@
     // overflow:hidden ancestor, so the calendar opened but was invisible.
     // Move it to <body> so it renders unclipped.
     // NOTE: #date-picker-popover is declared further down in the HTML,
-    // AFTER this </script> tag closes, so it does not exist yet when this
+    // after this script block closes, so it does not exist yet when this
     // script runs. Must wait for DOMContentLoaded (with a null guard) or
     // this silently fails to find the element.
     document.addEventListener("DOMContentLoaded", () => {
