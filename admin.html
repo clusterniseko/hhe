@@ -1567,7 +1567,7 @@
             <th onclick="sortBy('country')">Country</th>
             <th onclick="sortBy('lang')">Lang</th>
             <th onclick="sortBy('ticket_used')">Ticket</th>
-            <th onclick="sortBy('created_at')">Registered at</th>
+            <th onclick="sortBy('created_at')">Registered at (JST)</th>
           </tr>
         </thead>
         <tbody id="table-body"></tbody>
@@ -1607,7 +1607,7 @@
             <th>Last name</th>
             <th>Email</th>
             <th>Country</th>
-            <th>Deleted at</th>
+            <th>Deleted at (JST)</th>
           </tr>
         </thead>
         <tbody id="trash-body"></tbody>
@@ -1636,6 +1636,31 @@
     // 🔧 CONFIGURACIÓN
     // ─────────────────────────────────────────────────────────────────
     const API_URL = "https://hhe-production.up.railway.app";
+
+    // ── JST date helpers ────────────────────────────────────────────
+    // Todas las comparaciones/visualizaciones de fecha deben usar
+    // Asia/Tokyo, NUNCA UTC crudo ni la zona horaria local del navegador.
+    function toJSTDateString(isoString) {
+      if (!isoString) return "";
+      const d = new Date(isoString);
+      if (isNaN(d)) return "";
+      // en-CA produce formato YYYY-MM-DD, ideal para comparar con <input type="date">
+      return new Intl.DateTimeFormat("en-CA", {
+        timeZone: "Asia/Tokyo",
+        year: "numeric", month: "2-digit", day: "2-digit"
+      }).format(d);
+    }
+
+    function toJSTDateTimeString(isoString) {
+      if (!isoString) return "—";
+      const d = new Date(isoString);
+      if (isNaN(d)) return "—";
+      return new Intl.DateTimeFormat("en-US", {
+        timeZone: "Asia/Tokyo",
+        year: "numeric", month: "short", day: "numeric",
+        hour: "numeric", minute: "2-digit", hour12: true
+      }).format(d);
+    }
 
     let allData      = [];
     let trashData    = [];
@@ -1964,7 +1989,7 @@
         if (activeFilter === "pending" &&  r.ticket_used) return false;
         if (dateVal) {
           if (!r.created_at) return false;
-          if (r.created_at.slice(0, 10) !== dateVal) return false;
+          if (toJSTDateString(r.created_at) !== dateVal) return false;
         }
         if (query) {
           const haystack = [r.first_name, r.last_name, r.email, r.phone, r.country]
@@ -1996,7 +2021,7 @@
 
       tbody.innerHTML = rows.map(r => {
         const date = r.created_at
-          ? new Date(r.created_at).toLocaleString("en-US", { dateStyle: "medium", timeStyle: "short" })
+          ? toJSTDateTimeString(r.created_at)
           : "—";
         const badge = r.ticket_used
           ? `<span class="badge badge-used">Used</span>`
@@ -2243,7 +2268,7 @@
       }
       tbody.innerHTML = trashData.map(r => {
         const delDate = r.deleted_at
-          ? new Date(r.deleted_at).toLocaleString("en-US", { dateStyle: "medium", timeStyle: "short" })
+          ? toJSTDateTimeString(r.deleted_at)
           : "—";
         const checked = selectedTrash.has(r.email) ? "checked" : "";
         const safeEmail = (r.email || "").replace(/'/g, "\\'");
@@ -2368,7 +2393,7 @@
       return allData.filter(r => {
         if (!from && !to) return true;
         if (!r.created_at) return false;
-        const d = r.created_at.slice(0, 10);
+        const d = toJSTDateString(r.created_at);
         if (from && d < from) return false;
         if (to   && d > to)   return false;
         return true;
@@ -2390,14 +2415,14 @@
     }
 
     function downloadCSV(data, filename) {
-      const headers = ["First Name","Last Name","State","Country","Email Address","Phone Number"];
+      const headers = ["First Name","Last Name","Country","Email Address","Phone Number","Registered at (JST)"];
       const rows = data.map(r => [
         r.first_name,
         r.last_name,
-        r.state,
         r.country,
         r.email,
-        r.phone
+        r.phone,
+        r.created_at ? toJSTDateTimeString(r.created_at) : ""
       ].map(v => `"${String(v ?? "").replace(/"/g, '""')}"`).join(","));
 
       const csv  = [headers.join(","), ...rows].join("\n");
