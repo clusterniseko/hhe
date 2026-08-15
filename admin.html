@@ -2393,7 +2393,7 @@
       return allData.filter(r => {
         if (!from && !to) return true;
         if (!r.created_at) return false;
-        const d = r.created_at.slice(0, 10);
+        const d = toJSTDateString(r.created_at);
         if (from && d < from) return false;
         if (to   && d > to)   return false;
         return true;
@@ -2415,14 +2415,14 @@
     }
 
     function downloadCSV(data, filename) {
-      const headers = ["First Name","Last Name","State","Country","Email Address","Phone Number"];
+      const headers = ["First Name","Last Name","Country","Email Address","Phone Number","Registered at (JST)"];
       const rows = data.map(r => [
         r.first_name,
         r.last_name,
-        r.state,
         r.country,
         r.email,
-        r.phone
+        r.phone,
+        r.created_at ? toJSTDateTimeString(r.created_at) : ""
       ].map(v => `"${String(v ?? "").replace(/"/g, '""')}"`).join(","));
 
       const csv  = [headers.join(","), ...rows].join("\n");
@@ -2434,7 +2434,7 @@
       a.click();
       URL.revokeObjectURL(url);
     }
-    
+
     // Close export modal on backdrop click
     document.getElementById("export-modal-backdrop").addEventListener("click", function(e) {
       if (e.target === this) closeExportModal();
@@ -2559,6 +2559,20 @@
       if (!pop.contains(e.target) && !e.target.closest(".date-picker-btn")) closeDatePicker();
     });
 
+    // The popover uses position:fixed, but it lives inside .export-modal,
+    // which has "overflow: hidden" for its rounded-corner animation.
+    // Browsers still clip fixed-position descendants inside an
+    // overflow:hidden ancestor, so the calendar opened but was invisible.
+    // Move it to <body> so it renders unclipped. This script runs at the
+    // bottom of <body>, so the DOM is already parsed - no need to wait
+    // for DOMContentLoaded.
+    (function relocateDatePicker() {
+      const pop = document.getElementById("date-picker-popover");
+      if (pop && pop.parentElement !== document.body) {
+        document.body.appendChild(pop);
+      }
+    })();
+
     // ── Scroll mirror (top scrollbar for records table) ──────────────
     (function() {
       const mirror = document.getElementById("records-scroll-mirror");
@@ -2664,4 +2678,3 @@
 
 </body>
 </html>
- 
