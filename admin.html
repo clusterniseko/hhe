@@ -2672,3 +2672,43 @@
 
 </body>
 </html>
+
+<script>
+  // Fallback date picker: if the custom calendar isn't available,
+  // open a native <input type="date"> so clicks always do something.
+  window.addEventListener('DOMContentLoaded', () => {
+    function fallbackPick(field) {
+      if (typeof openDatePicker === 'function') return openDatePicker(field);
+      const input = document.createElement('input');
+      input.type = 'date';
+      input.style.position = 'absolute';
+      input.style.left = '-9999px';
+      document.body.appendChild(input);
+      input.addEventListener('change', () => {
+        const val = input.value; // YYYY-MM-DD
+        const hidden = document.getElementById(`export-${field}`);
+        if (hidden) hidden.value = val;
+        const display = document.getElementById(`dp-${field}-display`);
+        if (display) {
+          if (val) {
+            const [y,m,d] = val.split('-');
+            display.textContent = `${y}/${m}/${d}`;
+          } else {
+            display.textContent = field === 'from' ? 'From date' : 'To date';
+          }
+        }
+        const btn = document.getElementById(`dp-${field}-btn`);
+        if (btn) btn.classList.toggle('has-value', !!val);
+        if (typeof updateExportSummary === 'function') updateExportSummary();
+        document.body.removeChild(input);
+      });
+      input.focus();
+      input.click();
+    }
+
+    const fromBtn = document.getElementById('dp-from-btn');
+    const toBtn   = document.getElementById('dp-to-btn');
+    if (fromBtn) fromBtn.addEventListener('click', () => fallbackPick('from'));
+    if (toBtn)   toBtn.addEventListener('click', () => fallbackPick('to'));
+  });
+</script>
