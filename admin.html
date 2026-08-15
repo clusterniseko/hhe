@@ -2440,6 +2440,14 @@
       if (e.target === this) closeExportModal();
     });
 
+    // Ensure date-picker buttons are bound after the full DOM loads
+    window.addEventListener('load', () => {
+      const fromBtn = document.getElementById('dp-from-btn');
+      const toBtn   = document.getElementById('dp-to-btn');
+      if (fromBtn) fromBtn.addEventListener('click', () => openDatePicker('from'));
+      if (toBtn)   toBtn.addEventListener('click', () => openDatePicker('to'));
+    });
+
     // ── Custom date picker ─────────────────────────────────────────
     let dpField = null;
     let dpYear  = new Date().getFullYear();
