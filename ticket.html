@@ -16,6 +16,8 @@
       align-items: center;
       justify-content: center;
       padding: 1rem;
+      padding-bottom: 6.5rem;
+      -webkit-tap-highlight-color: transparent;
     }
     h1 { font-family: 'Playfair Display', serif; }
     .wrapper {
@@ -26,7 +28,7 @@
     }
     .hotel-name {
       font-family: 'Playfair Display', serif;
-      font-size: 1rem;
+      font-size: 1.5rem;
       letter-spacing: 0.25em;
       text-transform: uppercase;
       color: hsl(40, 60%, 65%);
@@ -42,9 +44,15 @@
       margin-bottom: 1.25rem;
     }
     .wifi-box {
-      margin-top: 3.5rem;
-      padding-top: 1.25rem;
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: hsl(220, 55%, 14%);
+      padding: 1rem 1.25rem calc(1rem + env(safe-area-inset-bottom, 0px));
       border-top: 1px solid hsla(40, 60%, 65%, 0.15);
+      text-align: center;
+      z-index: 10;
     }
     .wifi-label {
       font-size: 0.95rem;
@@ -71,8 +79,15 @@
     #ticket-view img {
       width: 280px;
       cursor: pointer;
-      transition: transform 0.3s;
+      transition: transform 0.3s, opacity 0.3s;
       filter: drop-shadow(0 0 35px hsla(40, 80%, 50%, 0.35));
+      -webkit-tap-highlight-color: transparent;
+      -webkit-touch-callout: none;
+      -webkit-user-select: none;
+      user-select: none;
+      -webkit-user-drag: none;
+      user-drag: none;
+      outline: none;
     }
     #ticket-view img:hover { transform: scale(1.05); }
     #ticket-view p {
@@ -106,8 +121,8 @@
     }
     #gracias .nombre {
       color: hsl(40, 80%, 55%);
-      font-size: 1.25rem;
-      font-weight: 500;
+      font-size: 1.6rem;
+      font-weight: 600;
     }
     #gracias .gracias-sub {
       color: hsl(220, 15%, 55%);
@@ -119,14 +134,13 @@
       to { opacity: 1; transform: translateY(0); }
     }
     @media (max-width: 480px) {
-      body { padding: 1.5rem 1rem; align-items: flex-start; padding-top: 3rem; }
+      body { padding: 1.5rem 1rem; align-items: flex-start; padding-top: 3rem; padding-bottom: 7.5rem; }
       .wrapper { max-width: 100%; }
-      .hotel-name { font-size: 0.75rem; letter-spacing: 0.2em; margin-bottom: 1.5rem; }
+      .hotel-name { font-size: 1.15rem; letter-spacing: 0.2em; margin-bottom: 1.5rem; }
       .drink-ticket-label { font-size: 1.15rem; margin-bottom: 1rem; }
-      .wifi-box { margin-top: 2.5rem; }
       #ticket-view img { width: 220px; }
       #gracias h1 { font-size: 2.75rem; }
-      #gracias .nombre { font-size: 1rem; }
+      #gracias .nombre { font-size: 1.3rem; }
     }
     @media (max-width: 360px) {
       #ticket-view img { width: 180px; }
@@ -151,12 +165,12 @@
       <p class="nombre" id="nombre-display"></p>
       <p class="gracias-sub" id="gracias-sub"></p>
     </div>
-
-    <div class="wifi-box">
-      <p class="wifi-label" id="wifi-label">WiFi Password:<span class="wifi-blank"></span></p>
-      <p class="wifi-note" id="wifi-note">Insert the passcode in the promotional code field when connecting to the hhonors network.</p>
-    </div>
   </div>
+
+  <footer class="wifi-box">
+    <p class="wifi-label" id="wifi-label">WiFi Password:<span class="wifi-blank"></span></p>
+    <p class="wifi-note" id="wifi-note">Insert the passcode in the promotional code field when connecting to the hhonors network.</p>
+  </footer>
 
   <script>
     const API_URL = "https://hhe-production.up.railway.app";
