@@ -2393,7 +2393,7 @@
       return allData.filter(r => {
         if (!from && !to) return true;
         if (!r.created_at) return false;
-        const d = toJSTDateString(r.created_at);
+        const d = r.created_at.slice(0, 10);
         if (from && d < from) return false;
         if (to   && d > to)   return false;
         return true;
@@ -2415,14 +2415,14 @@
     }
 
     function downloadCSV(data, filename) {
-      const headers = ["First Name","Last Name","Country","Email Address","Phone Number","Registered at (JST)"];
+      const headers = ["First Name","Last Name","State","Country","Email Address","Phone Number"];
       const rows = data.map(r => [
         r.first_name,
         r.last_name,
+        r.state,
         r.country,
         r.email,
-        r.phone,
-        r.created_at ? toJSTDateTimeString(r.created_at) : ""
+        r.phone
       ].map(v => `"${String(v ?? "").replace(/"/g, '""')}"`).join(","));
 
       const csv  = [headers.join(","), ...rows].join("\n");
@@ -2434,18 +2434,10 @@
       a.click();
       URL.revokeObjectURL(url);
     }
-
+    
     // Close export modal on backdrop click
     document.getElementById("export-modal-backdrop").addEventListener("click", function(e) {
       if (e.target === this) closeExportModal();
-    });
-
-    // Ensure date-picker buttons are bound after the full DOM loads
-    window.addEventListener('load', () => {
-      const fromBtn = document.getElementById('dp-from-btn');
-      const toBtn   = document.getElementById('dp-to-btn');
-      if (fromBtn) fromBtn.addEventListener('click', () => openDatePicker('from'));
-      if (toBtn)   toBtn.addEventListener('click', () => openDatePicker('to'));
     });
 
     // ── Custom date picker ─────────────────────────────────────────
@@ -2672,43 +2664,4 @@
 
 </body>
 </html>
-
-<script>
-  // Fallback date picker: if the custom calendar isn't available,
-  // open a native <input type="date"> so clicks always do something.
-  window.addEventListener('DOMContentLoaded', () => {
-    function fallbackPick(field) {
-      if (typeof openDatePicker === 'function') return openDatePicker(field);
-      const input = document.createElement('input');
-      input.type = 'date';
-      input.style.position = 'absolute';
-      input.style.left = '-9999px';
-      document.body.appendChild(input);
-      input.addEventListener('change', () => {
-        const val = input.value; // YYYY-MM-DD
-        const hidden = document.getElementById(`export-${field}`);
-        if (hidden) hidden.value = val;
-        const display = document.getElementById(`dp-${field}-display`);
-        if (display) {
-          if (val) {
-            const [y,m,d] = val.split('-');
-            display.textContent = `${y}/${m}/${d}`;
-          } else {
-            display.textContent = field === 'from' ? 'From date' : 'To date';
-          }
-        }
-        const btn = document.getElementById(`dp-${field}-btn`);
-        if (btn) btn.classList.toggle('has-value', !!val);
-        if (typeof updateExportSummary === 'function') updateExportSummary();
-        document.body.removeChild(input);
-      });
-      input.focus();
-      input.click();
-    }
-
-    const fromBtn = document.getElementById('dp-from-btn');
-    const toBtn   = document.getElementById('dp-to-btn');
-    if (fromBtn) fromBtn.addEventListener('click', () => fallbackPick('from'));
-    if (toBtn)   toBtn.addEventListener('click', () => fallbackPick('to'));
-  });
-</script>
+ 
