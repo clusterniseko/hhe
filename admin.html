@@ -172,6 +172,18 @@
 
     .login-body button:hover { opacity: 0.9; transform: translateY(-1px); }
 
+    .login-footer {
+      text-align: center;
+      padding: 1rem 2rem 1.5rem;
+      background: hsl(220, 45%, 15%);
+      border-top: 1px solid hsla(40, 30%, 60%, 0.08);
+    }
+
+    .login-footer p {
+      font-size: 0.75rem;
+      color: hsla(40, 30%, 80%, 0.45);
+    }
+
     .login-error {
       color: hsl(0, 65%, 50%);
       font-size: 0.82rem;
@@ -1449,6 +1461,10 @@
         <p class="login-error" id="login-error">Incorrect credentials. Try again.</p>
       </div>
 
+      <div class="login-footer">
+        <p>Internal use only &nbsp;·&nbsp; Niseko Cluster</p>
+      </div>
+
     </div>
   </div>
 
@@ -1477,6 +1493,16 @@
       <div class="stat-card">
         <p class="label">Tickets pending</p>
         <p class="value" id="stat-pending">—</p>
+      </div>
+      <div class="stat-card" style="display:flex; flex-direction:column; gap:8px;">
+        <p class="label">WiFi password (monthly)</p>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:6px;">
+          <input id="wifi-password-input" type="text" placeholder="e.g. 2026sep"
+            style="width:100%; min-width:0; padding:6px 10px; border-radius:8px; border:1px solid var(--border, #444);
+                   background:transparent; color:inherit; font-size:0.9rem; box-sizing:border-box;">
+          <button class="btn-export" style="width:100%; padding:6px 12px; font-size:0.85rem;" onclick="saveWifiPassword()">Save</button>
+        </div>
+        <p id="wifi-password-status" style="font-size:0.75rem; color:var(--green); min-height:1em; margin:0;"></p>
       </div>
     </div>
 
@@ -1541,7 +1567,7 @@
             <th onclick="sortBy('country')">Country</th>
             <th onclick="sortBy('lang')">Lang</th>
             <th onclick="sortBy('ticket_used')">Ticket</th>
-            <th onclick="sortBy('created_at')">Registered at (JST)</th>
+            <th onclick="sortBy('created_at')">Registered at</th>
           </tr>
         </thead>
         <tbody id="table-body"></tbody>
@@ -1695,6 +1721,55 @@
       renderTable();
       updateTrashBtn();
       resetInactivityTimer();
+      loadWifiPassword();
+    }
+
+    // ── WiFi password settings ────────────────────────────────────
+    async function loadWifiPassword() {
+      try {
+        const res = await fetch(`${API_URL}/wifi-password`);
+        if (!res.ok) return;
+        const data = await res.json();
+        document.getElementById("wifi-password-input").value = data.wifi_password || "";
+      } catch (err) {
+        console.warn("Could not load WiFi password:", err);
+      }
+    }
+
+    async function saveWifiPassword() {
+      const input  = document.getElementById("wifi-password-input");
+      const status = document.getElementById("wifi-password-status");
+      const value  = input.value.trim();
+
+      if (!value) {
+        status.style.color = "var(--red, #e55)";
+        status.textContent = "Enter a password first.";
+        return;
+      }
+
+      status.style.color = "inherit";
+      status.textContent = "Saving…";
+
+      try {
+        const res = await fetch(`${API_URL}/admin/wifi-password`, {
+          method: "POST",
+          headers: authHeaders(),
+          body: JSON.stringify({ wifi_password: value })
+        });
+        const data = await res.json();
+
+        if (res.ok && data.success) {
+          status.style.color = "var(--green)";
+          status.textContent = "Saved ✓";
+          setTimeout(() => { status.textContent = ""; }, 3000);
+        } else {
+          status.style.color = "var(--red, #e55)";
+          status.textContent = "Could not save. Try again.";
+        }
+      } catch (err) {
+        status.style.color = "var(--red, #e55)";
+        status.textContent = "Connection error.";
+      }
     }
 
     function logout() {
@@ -1813,6 +1888,7 @@
           renderTable();
           updateTrashBtn();
           resetInactivityTimer();
+          loadWifiPassword();
         })();
       } else if (!isReload) {
         clearSession();
@@ -1888,7 +1964,7 @@
         if (activeFilter === "pending" &&  r.ticket_used) return false;
         if (dateVal) {
           if (!r.created_at) return false;
-          if (localDateKey(r.created_at) !== dateVal) return false;
+          if (r.created_at.slice(0, 10) !== dateVal) return false;
         }
         if (query) {
           const haystack = [r.first_name, r.last_name, r.email, r.phone, r.country]
@@ -1920,7 +1996,7 @@
 
       tbody.innerHTML = rows.map(r => {
         const date = r.created_at
-          ? new Date(r.created_at).toLocaleString("en-US", { dateStyle: "medium", timeStyle: "short", timeZone: "Asia/Tokyo" })
+          ? new Date(r.created_at).toLocaleString("en-US", { dateStyle: "medium", timeStyle: "short" })
           : "—";
         const badge = r.ticket_used
           ? `<span class="badge badge-used">Used</span>`
@@ -2167,7 +2243,7 @@
       }
       tbody.innerHTML = trashData.map(r => {
         const delDate = r.deleted_at
-          ? new Date(r.deleted_at).toLocaleString("en-US", { dateStyle: "medium", timeStyle: "short", timeZone: "Asia/Tokyo" })
+          ? new Date(r.deleted_at).toLocaleString("en-US", { dateStyle: "medium", timeStyle: "short" })
           : "—";
         const checked = selectedTrash.has(r.email) ? "checked" : "";
         const safeEmail = (r.email || "").replace(/'/g, "\\'");
@@ -2292,7 +2368,7 @@
       return allData.filter(r => {
         if (!from && !to) return true;
         if (!r.created_at) return false;
-        const d = localDateKey(r.created_at);
+        const d = r.created_at.slice(0, 10);
         if (from && d < from) return false;
         if (to   && d > to)   return false;
         return true;
@@ -2335,15 +2411,8 @@
     }
 
     // Close export modal on backdrop click
-    // (deferred: the export modal markup is defined later in the HTML,
-    //  after this script tag, so the element doesn't exist yet at this point)
-    document.addEventListener("DOMContentLoaded", function() {
-      const exportBackdrop = document.getElementById("export-modal-backdrop");
-      if (exportBackdrop) {
-        exportBackdrop.addEventListener("click", function(e) {
-          if (e.target === this) closeExportModal();
-        });
-      }
+    document.getElementById("export-modal-backdrop").addEventListener("click", function(e) {
+      if (e.target === this) closeExportModal();
     });
 
     // ── Custom date picker ─────────────────────────────────────────
@@ -2429,29 +2498,12 @@
       }
     }
 
-    // All registration dates are business dates for Niseko (Japan), so we always
-    // compute/compare them in JST — regardless of the admin's own device timezone.
-    // (en-CA locale conveniently formats as YYYY-MM-DD.)
-    const JST_DATE_FMT = new Intl.DateTimeFormat("en-CA", {
-      timeZone: "Asia/Tokyo", year: "numeric", month: "2-digit", day: "2-digit"
-    });
-
     function localIsoToday() {
-      return JST_DATE_FMT.format(new Date());
+      const t = new Date();
+      return `${t.getFullYear()}-${pad2(t.getMonth()+1)}-${pad2(t.getDate())}`;
     }
 
     function pad2(n) { return String(n).padStart(2, "0"); }
-
-    // Converts a stored UTC timestamp into its JST calendar date (YYYY-MM-DD),
-    // matching what's shown in the table. Using the raw UTC date (e.g. via
-    // .slice(0,10)) or the admin's own local timezone would mismatch by a day —
-    // e.g. a record made at 05:00 JST on Aug 1 is "Jul 31" in UTC.
-    function localDateKey(value) {
-      if (!value) return null;
-      const d = new Date(value);
-      if (isNaN(d)) return null;
-      return JST_DATE_FMT.format(d);
-    }
 
     function makeDpDay(date, other, fromVal, toVal, todayStr) {
       const iso = `${date.getFullYear()}-${pad2(date.getMonth()+1)}-${pad2(date.getDate())}`;

@@ -143,6 +143,24 @@ def init_db():
             """)
             con.commit()
 
+            # 8. Create settings table (key/value store, e.g. wifi_password)
+            run_sql(cur, "create settings table", """
+                CREATE TABLE IF NOT EXISTS settings (
+                    key         TEXT PRIMARY KEY,
+                    value       TEXT NOT NULL,
+                    updated_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                )
+            """)
+            con.commit()
+
+            # 9. Seed default wifi_password if not present
+            run_sql(cur, "seed wifi_password", """
+                INSERT INTO settings (key, value)
+                VALUES ('wifi_password', '2026aug')
+                ON CONFLICT (key) DO NOTHING
+            """)
+            con.commit()
+
     print("[init_db] Done.")
 
 
@@ -411,6 +429,43 @@ def admin_delete():
         return jsonify({"error": "not_found"}), 404
 
     return jsonify({"success": True, "deleted": deleted}), 200
+
+
+# ── GET /wifi-password — public, used by ticket.html ──────────────────
+@app.route("/wifi-password", methods=["GET"])
+def get_wifi_password():
+    with get_db() as con:
+        with con.cursor() as cur:
+            cur.execute("SELECT value FROM settings WHERE key = 'wifi_password'")
+            row = cur.fetchone()
+
+    return jsonify({"wifi_password": row[0] if row else ""})
+
+
+# ── POST /admin/wifi-password — protected, used by admin.html ─────────
+@app.route("/admin/wifi-password", methods=["POST"])
+def set_wifi_password():
+    if not check_admin_auth():
+        return jsonify({"error": "unauthorized"}), 401
+
+    data     = request.get_json(silent=True) or {}
+    password = data.get("wifi_password", "").strip()
+
+    if not password:
+        return jsonify({"error": "missing_password"}), 400
+
+    with get_db() as con:
+        with con.cursor() as cur:
+            cur.execute(
+                """INSERT INTO settings (key, value, updated_at)
+                   VALUES ('wifi_password', %s, CURRENT_TIMESTAMP)
+                   ON CONFLICT (key) DO UPDATE
+                   SET value = EXCLUDED.value, updated_at = CURRENT_TIMESTAMP""",
+                (password,)
+            )
+        con.commit()
+
+    return jsonify({"success": True, "wifi_password": password}), 200
 
 
 # ── GET /health ────────────────────────────────────────────────────────

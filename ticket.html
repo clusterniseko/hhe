@@ -26,11 +26,47 @@
     }
     .hotel-name {
       font-family: 'Playfair Display', serif;
-      font-size: 0.85rem;
+      font-size: 1rem;
       letter-spacing: 0.25em;
       text-transform: uppercase;
       color: hsl(40, 60%, 65%);
       margin-bottom: 2rem;
+    }
+    .drink-ticket-label {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.5rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: hsl(40, 70%, 68%);
+      margin-bottom: 1.25rem;
+    }
+    .wifi-box {
+      margin-top: 3.5rem;
+      padding-top: 1.25rem;
+      border-top: 1px solid hsla(40, 60%, 65%, 0.15);
+    }
+    .wifi-label {
+      font-size: 0.95rem;
+      letter-spacing: 0.03em;
+      color: hsl(220, 15%, 55%);
+    }
+    .wifi-label .wifi-blank {
+      display: inline-block;
+      min-width: 100px;
+      padding-bottom: 2px;
+      border-bottom: 1px solid hsla(220, 15%, 55%, 0.4);
+      margin-left: 0.4rem;
+      color: hsl(40, 60%, 70%);
+      font-weight: 500;
+      letter-spacing: 0.03em;
+      text-align: center;
+    }
+    .wifi-note {
+      color: hsl(220, 15%, 45%);
+      font-size: 0.95rem;
+      margin-top: 0.35rem;
+      line-height: 1.45;
     }
     #ticket-view img {
       width: 280px;
@@ -41,12 +77,12 @@
     #ticket-view img:hover { transform: scale(1.05); }
     #ticket-view p {
       color: hsl(220, 15%, 55%);
-      font-size: 0.875rem;
+      font-size: 1rem;
       margin-top: 1.5rem;
     }
     #ticket-view .loading-msg {
       color: hsl(40, 60%, 65%);
-      font-size: 0.875rem;
+      font-size: 1rem;
       margin-top: 1.5rem;
       display: none;
     }
@@ -70,12 +106,12 @@
     }
     #gracias .nombre {
       color: hsl(40, 80%, 55%);
-      font-size: 1.125rem;
+      font-size: 1.25rem;
       font-weight: 500;
     }
     #gracias .gracias-sub {
       color: hsl(220, 15%, 55%);
-      font-size: 0.875rem;
+      font-size: 1rem;
       margin-top: 0.75rem;
     }
     @keyframes floatIn {
@@ -86,6 +122,8 @@
       body { padding: 1.5rem 1rem; align-items: flex-start; padding-top: 3rem; }
       .wrapper { max-width: 100%; }
       .hotel-name { font-size: 0.75rem; letter-spacing: 0.2em; margin-bottom: 1.5rem; }
+      .drink-ticket-label { font-size: 1.15rem; margin-bottom: 1rem; }
+      .wifi-box { margin-top: 2.5rem; }
       #ticket-view img { width: 220px; }
       #gracias h1 { font-size: 2.75rem; }
       #gracias .nombre { font-size: 1rem; }
@@ -101,8 +139,9 @@
     <p class="hotel-name">Hilton Niseko Village</p>
 
     <div id="ticket-view">
+      <p class="drink-ticket-label" id="drink-ticket-label">Drink Ticket</p>
       <img id="ticket-img" src="ticket-cheers.png" alt="Ticket Brindis">
-      <p id="hint-text">Click the ticket to use it</p>
+      <p id="hint-text">Please, show the ticket to the restaurant staff to redeem your free drink.</p>
       <p class="loading-msg" id="loading-msg">Processing…</p>
       <div class="ticket-error" id="ticket-error"></div>
     </div>
@@ -112,10 +151,18 @@
       <p class="nombre" id="nombre-display"></p>
       <p class="gracias-sub" id="gracias-sub"></p>
     </div>
+
+    <div class="wifi-box">
+      <p class="wifi-label" id="wifi-label">WiFi Password:<span class="wifi-blank"></span></p>
+      <p class="wifi-note" id="wifi-note">Insert the passcode in the promotional code field when connecting to the hhonors network.</p>
+    </div>
   </div>
 
   <script>
     const API_URL = "https://hhe-production.up.railway.app";
+
+    // ── Fallback if the server is unreachable ──
+    let WIFI_PASSWORD = "2026aug";
 
     const thankYou = {
       en: { heading: "Thank\nYou",        sub: "We hope you enjoy your stay." },
@@ -124,6 +171,24 @@
       zh: { heading: "谢谢\n您",             sub: "祝您入住愉快。" },
       fr: { heading: "Merci\nBeaucoup",    sub: "Nous espérons que vous profiterez de votre séjour." },
       es: { heading: "Muchas\nGracias",    sub: "Esperamos que disfrute su estancia." },
+    };
+
+    const wifiInfo = {
+      en: { label: "WiFi Password:", note: "Insert the passcode in the promotional code field when connecting to the hhonors network." },
+      ja: { label: "Wi-Fiパスワード：", note: "hhonorsネットワークに接続する際、プロモーションコード欄にパスコードを入力してください。" },
+      ko: { label: "WiFi 비밀번호:", note: "hhonors 네트워크에 연결할 때 프로모션 코드란에 비밀번호를 입력하세요." },
+      zh: { label: "WiFi 密码：", note: "连接 hhonors 网络时，请在优惠码栏中输入该密码。" },
+      fr: { label: "Mot de passe WiFi :", note: "Saisissez le code dans le champ code promotionnel lors de la connexion au réseau hhonors." },
+      es: { label: "Contraseña WiFi:", note: "Ingrese el código en el campo de código promocional al conectarse a la red hhonors." },
+    };
+
+    const ticketViewInfo = {
+      en: { label: "Drink Ticket", hint: "Please, show the ticket to the restaurant staff to redeem your free drink." },
+      ja: { label: "ドリンクチケット", hint: "無料ドリンクをお受け取りになるには、レストランスタッフにこのチケットをご提示ください。" },
+      ko: { label: "음료 티켓", hint: "무료 음료를 받으시려면 레스토랑 직원에게 티켓을 보여주세요." },
+      zh: { label: "饮品券", hint: "请向餐厅工作人员出示此券以兑换您的免费饮品。" },
+      fr: { label: "Ticket Boisson", hint: "Veuillez montrer ce ticket au personnel du restaurant pour recevoir votre boisson gratuite." },
+      es: { label: "Ticket de Bebida", hint: "Por favor, muestre el ticket al personal del restaurante para canjear su bebida gratis." },
     };
 
     const params = new URLSearchParams(window.location.search);
@@ -136,6 +201,34 @@
       nombre = "Demo User";
       correo = "demo@local.com";
     }
+
+    function applyWifiInfo() {
+      const w = wifiInfo[lang] || wifiInfo.en;
+      document.getElementById("wifi-label").innerHTML = w.label + '<span class="wifi-blank">' + WIFI_PASSWORD + '</span>';
+      document.getElementById("wifi-note").textContent = w.note;
+    }
+    applyWifiInfo();
+
+    async function loadWifiPassword() {
+      try {
+        const res = await fetch(`${API_URL}/wifi-password`);
+        const data = await res.json();
+        if (data.wifi_password) {
+          WIFI_PASSWORD = data.wifi_password;
+          applyWifiInfo();
+        }
+      } catch (err) {
+        console.warn("Could not load WiFi password, using fallback:", err);
+      }
+    }
+    loadWifiPassword();
+
+    function applyTicketViewInfo() {
+      const t = ticketViewInfo[lang] || ticketViewInfo.en;
+      document.getElementById("drink-ticket-label").textContent = t.label;
+      document.getElementById("hint-text").textContent = t.hint;
+    }
+    applyTicketViewInfo();
 
     // ── localStorage helpers ──
     function getUsedTickets() {
