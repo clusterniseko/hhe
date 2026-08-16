@@ -76,6 +76,62 @@
       margin-top: 0.35rem;
       line-height: 1.45;
     }
+    .wifi-howto-link {
+      display: inline-block;
+      margin-top: 0.5rem;
+      color: hsl(40, 60%, 65%);
+      font-size: 0.9rem;
+      text-decoration: underline;
+      text-underline-offset: 2px;
+      cursor: pointer;
+      background: none;
+      border: none;
+      font-family: 'DM Sans', sans-serif;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .wifi-howto-link:hover { color: hsl(40, 70%, 75%); }
+    .wifi-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: hsla(220, 55%, 8%, 0.92);
+      z-index: 100;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem 1rem;
+    }
+    .wifi-overlay.open { display: flex; }
+    .wifi-overlay-content {
+      position: relative;
+      max-width: 90vw;
+      max-height: 85vh;
+    }
+    .wifi-overlay-content img {
+      max-width: 90vw;
+      max-height: 85vh;
+      display: block;
+      border-radius: 8px;
+      box-shadow: 0 0 40px hsla(0, 0%, 0%, 0.5);
+    }
+    .wifi-overlay-close {
+      position: absolute;
+      top: -1.1rem;
+      right: -1.1rem;
+      width: 2.25rem;
+      height: 2.25rem;
+      border-radius: 50%;
+      background: hsl(40, 60%, 65%);
+      color: hsl(220, 55%, 14%);
+      border: none;
+      font-size: 1.25rem;
+      line-height: 1;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 2px 10px hsla(0, 0%, 0%, 0.4);
+    }
+    .wifi-overlay-close:hover { background: hsl(40, 70%, 75%); }
     #ticket-view img {
       width: 280px;
       cursor: pointer;
@@ -170,7 +226,15 @@
   <footer class="wifi-box">
     <p class="wifi-label" id="wifi-label">WiFi Password:<span class="wifi-blank"></span></p>
     <p class="wifi-note" id="wifi-note">Insert the passcode in the promotional code field when connecting to the hhonors network.</p>
+    <button type="button" class="wifi-howto-link" id="wifi-howto-link">How to connect to Free Wi-Fi</button>
   </footer>
+
+  <div class="wifi-overlay" id="wifi-overlay">
+    <div class="wifi-overlay-content">
+      <button type="button" class="wifi-overlay-close" id="wifi-overlay-close" aria-label="Close">&times;</button>
+      <img src="Steps.png" alt="How to connect to Free Wi-Fi" id="wifi-overlay-img">
+    </div>
+  </div>
 
   <script>
     const API_URL = "https://hhe-production.up.railway.app";
@@ -183,17 +247,20 @@
       ja: { heading: "ありがとう\nございます", sub: "ご滞在をお楽しみください。" },
       ko: { heading: "감사합니다",            sub: "즐거운 숙박이 되시길 바랍니다." },
       zh: { heading: "谢谢\n您",             sub: "祝您入住愉快。" },
-      fr: { heading: "Merci\nBeaucoup",    sub: "Nous espérons que vous profiterez de votre séjour." },
-      es: { heading: "Muchas\nGracias",    sub: "Esperamos que disfrute su estancia." },
     };
 
     const wifiInfo = {
-      en: { label: "WiFi Password:", note: "Insert the passcode in the promotional code field when connecting to the hhonors network." },
+      en: { label: "Wi-Fi Password:", note: "Insert the passcode in the promotional code field when connecting to the hhonors network." },
       ja: { label: "Wi-Fiパスワード：", note: "hhonorsネットワークに接続する際、プロモーションコード欄にパスコードを入力してください。" },
-      ko: { label: "WiFi 비밀번호:", note: "hhonors 네트워크에 연결할 때 프로모션 코드란에 비밀번호를 입력하세요." },
-      zh: { label: "WiFi 密码：", note: "连接 hhonors 网络时，请在优惠码栏中输入该密码。" },
-      fr: { label: "Mot de passe WiFi :", note: "Saisissez le code dans le champ code promotionnel lors de la connexion au réseau hhonors." },
-      es: { label: "Contraseña WiFi:", note: "Ingrese el código en el campo de código promocional al conectarse a la red hhonors." },
+      ko: { label: "Wi-Fi 비밀번호:", note: "hhonors 네트워크에 연결할 때 프로모션 코드란에 비밀번호를 입력하세요." },
+      zh: { label: "Wi-Fi 密码：", note: "连接 hhonors 网络时，请在优惠码栏中输入该密码。" },
+    };
+
+    const wifiHowtoInfo = {
+      en: "How to connect to Free Wi-Fi",
+      ja: "無料Wi-Fiへの接続方法",
+      ko: "무료 Wi-Fi 연결 방법",
+      zh: "如何连接免费Wi-Fi",
     };
 
     const ticketViewInfo = {
@@ -201,8 +268,6 @@
       ja: { label: "ドリンクチケット", hint: "無料ドリンクをお受け取りになるには、レストランスタッフにこのチケットをご提示ください。" },
       ko: { label: "음료 티켓", hint: "무료 음료를 받으시려면 레스토랑 직원에게 티켓을 보여주세요." },
       zh: { label: "饮品券", hint: "请向餐厅工作人员出示此券以兑换您的免费饮品。" },
-      fr: { label: "Ticket Boisson", hint: "Veuillez montrer ce ticket au personnel du restaurant pour recevoir votre boisson gratuite." },
-      es: { label: "Ticket de Bebida", hint: "Por favor, muestre el ticket al personal del restaurante para canjear su bebida gratis." },
     };
 
     const params = new URLSearchParams(window.location.search);
@@ -220,6 +285,7 @@
       const w = wifiInfo[lang] || wifiInfo.en;
       document.getElementById("wifi-label").innerHTML = w.label + '<span class="wifi-blank">' + WIFI_PASSWORD + '</span>';
       document.getElementById("wifi-note").textContent = w.note;
+      document.getElementById("wifi-howto-link").textContent = wifiHowtoInfo[lang] || wifiHowtoInfo.en;
     }
     applyWifiInfo();
 
@@ -355,6 +421,34 @@
       history.pushState(null, null, location.href);
       window.onpopstate = function () { history.go(1); };
     }
+
+    document.addEventListener("DOMContentLoaded", function () {
+      const howtoLink   = document.getElementById("wifi-howto-link");
+      const overlay     = document.getElementById("wifi-overlay");
+      const overlayClose = document.getElementById("wifi-overlay-close");
+
+      if (!howtoLink || !overlay || !overlayClose) return;
+
+      function openOverlay() {
+        overlay.classList.add("open");
+      }
+      function closeOverlay() {
+        overlay.classList.remove("open");
+      }
+
+      howtoLink.addEventListener("click", openOverlay);
+      overlayClose.addEventListener("click", closeOverlay);
+
+      // Close when clicking outside the image
+      overlay.addEventListener("click", function (e) {
+        if (e.target === overlay) closeOverlay();
+      });
+
+      // Close with Escape key
+      document.addEventListener("keydown", function (e) {
+        if (e.key === "Escape" && overlay.classList.contains("open")) closeOverlay();
+      });
+    });
   </script>
 </body>
 </html>
