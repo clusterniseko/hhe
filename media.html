@@ -631,8 +631,9 @@
     }
 
     // ── 送信完了画面 ───────────────────────────────────────────────────
-    // El estado "ya registrado" se guarda para que el huésped no pueda
-    // volver al formulario, ni con el botón atrás ni recargando la página.
+    // El estado "ya registrado" se guarda en sessionStorage: sobrevive a
+    // recargas y al botón atrás dentro de la misma pestaña, pero una
+    // pestaña nueva (o escribir la URL de nuevo) vuelve a dar el formulario.
     const DONE_KEY = "hnv_media_done";
 
     function bloquearBack() {
@@ -648,18 +649,21 @@
       window.scrollTo({ top: 0, behavior: "smooth" });
     }
 
-    // Reinicio para el personal: abrir media.html?reset=1 libera el equipo
-    // (útil en una tablet de recepción usada por varios huéspedes).
+    // Limpieza: versiones anteriores guardaban esto en localStorage, que no
+    // se borraba nunca. Si quedó ahí, se elimina.
+    try { localStorage.removeItem(DONE_KEY); } catch (err) {}
+
+    // Reinicio para el personal: abrir media.html?reset=1 libera la pestaña.
     if (new URLSearchParams(location.search).has("reset")) {
-      try { localStorage.removeItem(DONE_KEY); } catch (err) {}
+      try { sessionStorage.removeItem(DONE_KEY); } catch (err) {}
       history.replaceState(null, "", location.pathname);
     }
 
-    // Al cargar: si este navegador ya completó el registro, saltar directo
+    // Al cargar: si ESTA pestaña ya completó el registro, saltar directo
     // a la pantalla de agradecimiento.
     (function restoreDoneState() {
       let saved = null;
-      try { saved = JSON.parse(localStorage.getItem(DONE_KEY) || "null"); }
+      try { saved = JSON.parse(sessionStorage.getItem(DONE_KEY) || "null"); }
       catch (err) { saved = null; }
       if (saved && saved.name) showThankYou(saved.name);
     })();
@@ -736,7 +740,7 @@
         // ── Success: save to localStorage, then show thank-you ─────────
         saveRegistration(firstName, lastName, correo);
         const fullName = firstName + " " + lastName;
-        try { localStorage.setItem(DONE_KEY, JSON.stringify({ name: fullName })); }
+        try { sessionStorage.setItem(DONE_KEY, JSON.stringify({ name: fullName })); }
         catch (err) { console.warn("Could not persist done state:", err); }
         showThankYou(fullName);
 
