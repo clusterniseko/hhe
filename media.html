@@ -33,6 +33,9 @@
       padding: 2.5rem 1rem 0;
     }
 
+    /* Deja sitio para la barra fija de Wi-Fi una vez enviado el formulario */
+    body.done { padding-bottom: 190px; }
+
     h1, h2, h3 { font-family: 'Playfair Display', serif; }
 
     .wrapper {
@@ -234,16 +237,117 @@
       font-size: 1.5rem;
       font-weight: 700;
       color: var(--cream);
-      margin-bottom: 0.75rem;
+      margin-bottom: 0.5rem;
     }
 
-    .thankyou p {
+    .thankyou-name {
+      font-size: 1.0625rem;
+      font-weight: 500;
+      color: var(--gold-light);
+      margin-bottom: 1rem;
+      letter-spacing: 0.02em;
+    }
+
+    .thankyou-body {
       font-size: 0.9375rem;
       line-height: 1.9;
       color: var(--muted);
       max-width: 26em;
       margin: 0 auto;
     }
+
+    /* ── Wi-Fi (mismo bloque que ticket.html) ── */
+    .wifi-box {
+      display: none;
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: hsl(220, 55%, 14%);
+      padding: 1rem 1.25rem calc(1rem + env(safe-area-inset-bottom, 0px));
+      border-top: 1px solid hsla(40, 60%, 65%, 0.15);
+      text-align: center;
+      z-index: 10;
+    }
+    body.done .wifi-box { display: block; }
+    .wifi-label {
+      font-size: 0.95rem;
+      letter-spacing: 0.03em;
+      color: hsl(220, 15%, 55%);
+    }
+    .wifi-label .wifi-blank {
+      display: inline-block;
+      min-width: 100px;
+      padding-bottom: 2px;
+      border-bottom: 1px solid hsla(220, 15%, 55%, 0.4);
+      margin-left: 0.4rem;
+      color: hsl(40, 60%, 70%);
+      font-weight: 500;
+      letter-spacing: 0.03em;
+      text-align: center;
+    }
+    .wifi-note {
+      color: hsl(220, 15%, 45%);
+      font-size: 0.95rem;
+      margin-top: 0.35rem;
+      line-height: 1.45;
+    }
+    .wifi-howto-link {
+      display: inline-block;
+      margin-top: 0.5rem;
+      color: hsl(40, 60%, 65%);
+      font-size: 0.9rem;
+      text-decoration: underline;
+      text-underline-offset: 2px;
+      cursor: pointer;
+      background: none;
+      border: none;
+      font-family: 'DM Sans', sans-serif;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .wifi-howto-link:hover { color: hsl(40, 70%, 75%); }
+    .wifi-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: hsla(220, 55%, 8%, 0.92);
+      z-index: 100;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem 1rem;
+    }
+    .wifi-overlay.open { display: flex; }
+    .wifi-overlay-content {
+      position: relative;
+      max-width: 90vw;
+      max-height: 85vh;
+    }
+    .wifi-overlay-content img {
+      max-width: 90vw;
+      max-height: 85vh;
+      display: block;
+      border-radius: 8px;
+      box-shadow: 0 0 40px hsla(0, 0%, 0%, 0.5);
+    }
+    .wifi-overlay-close {
+      position: absolute;
+      top: -1.1rem;
+      right: -1.1rem;
+      width: 2.25rem;
+      height: 2.25rem;
+      border-radius: 50%;
+      background: hsl(40, 60%, 65%);
+      color: hsl(220, 55%, 14%);
+      border: none;
+      font-size: 1.25rem;
+      line-height: 1;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 2px 10px hsla(0, 0%, 0%, 0.4);
+    }
+    .wifi-overlay-close:hover { background: hsl(40, 70%, 75%); }
 
     @keyframes floatIn {
       from { opacity: 0; transform: translateY(24px); }
@@ -261,6 +365,8 @@
         padding: 1.5rem 0.75rem 2rem;
         align-items: flex-start;
       }
+
+      body.done { padding-bottom: 200px; }
 
       .wrapper {
         max-width: 100%;
@@ -400,7 +506,8 @@
         </svg>
       </div>
       <h2>ありがとうございます</h2>
-      <p>ご登録が完了しました。ヒルトン ニセコビレッジでお会いできることを楽しみにしております。</p>
+      <p class="thankyou-name" id="thankyou-name"></p>
+      <p class="thankyou-body">ご登録が完了しました。ヒルトン ニセコビレッジでお会いできることを楽しみにしております。</p>
     </div>
 
   </div>
@@ -408,6 +515,20 @@
   <footer class="site-footer">
     &copy; 2026 YOB&AIM &middot; All rights reserved
   </footer>
+
+  <!-- ── Wi-Fi (mismo bloque que ticket.html) ── -->
+  <footer class="wifi-box">
+    <p class="wifi-label" id="wifi-label">Wi-Fiパスワード：<span class="wifi-blank"></span></p>
+    <p class="wifi-note" id="wifi-note">hhonorsネットワークに接続する際、プロモーションコード欄にパスコードを入力してください。</p>
+    <button type="button" class="wifi-howto-link" id="wifi-howto-link">無料Wi-Fiへの接続方法</button>
+  </footer>
+
+  <div class="wifi-overlay" id="wifi-overlay">
+    <div class="wifi-overlay-content">
+      <button type="button" class="wifi-overlay-close" id="wifi-overlay-close" aria-label="Close">&times;</button>
+      <img src="Steps.png" alt="無料Wi-Fiへの接続方法" id="wifi-overlay-img">
+    </div>
+  </div>
 
   <script>
     // ─────────────────────────────────────────────────────────────────
@@ -417,6 +538,15 @@
 
     // Página solo en japonés: el idioma que se guarda en la base de datos.
     const LANG = "ja";
+
+    // ── Fallback if the server is unreachable ──
+    let WIFI_PASSWORD = "2026aug";
+
+    const wifiInfo = {
+      label: "Wi-Fiパスワード：",
+      note:  "hhonorsネットワークに接続する際、プロモーションコード欄にパスコードを入力してください。",
+      howto: "無料Wi-Fiへの接続方法",
+    };
 
     // Mensajes generados desde JS (el resto del texto está en el HTML).
     const t = {
@@ -429,6 +559,28 @@
       submitting:     "送信中…",
       submit:         "送信",
     };
+
+    // ── Wi-Fi password ─────────────────────────────────────────────────
+    function applyWifiInfo() {
+      document.getElementById("wifi-label").innerHTML = wifiInfo.label + '<span class="wifi-blank">' + WIFI_PASSWORD + '</span>';
+      document.getElementById("wifi-note").textContent = wifiInfo.note;
+      document.getElementById("wifi-howto-link").textContent = wifiInfo.howto;
+    }
+    applyWifiInfo();
+
+    async function loadWifiPassword() {
+      try {
+        const res = await fetch(`${API_URL}/wifi-password`);
+        const data = await res.json();
+        if (data.wifi_password) {
+          WIFI_PASSWORD = data.wifi_password;
+          applyWifiInfo();
+        }
+      } catch (err) {
+        console.warn("Could not load WiFi password, using fallback:", err);
+      }
+    }
+    loadWifiPassword();
 
     // ── Latin-only input filter ────────────────────────────────────────
     // Allows: a-z, A-Z, accented/diacritic latin chars, spaces, hyphens, apostrophes
@@ -475,11 +627,13 @@
     }
 
     // ── 送信完了画面 ───────────────────────────────────────────────────
-    function showThankYou() {
+    function showThankYou(fullName) {
+      document.getElementById("thankyou-name").textContent = fullName + " 様";
       document.getElementById("form-card").style.display = "none";
       document.getElementById("subtitle").style.display  = "none";
       document.getElementById("error").style.display     = "none";
       document.getElementById("thankyou").classList.add("open");
+      document.body.classList.add("done");   // muestra la barra de Wi-Fi
       window.scrollTo({ top: 0, behavior: "smooth" });
     }
 
@@ -554,7 +708,7 @@
 
         // ── Success: save to localStorage, then show thank-you ─────────
         saveRegistration(firstName, lastName, correo);
-        showThankYou();
+        showThankYou(firstName + " " + lastName);
 
       } catch (err) {
         errorEl.textContent = t.errorOffline;
@@ -563,6 +717,35 @@
         submitBtn.disabled = false;
         submitBtn.textContent = t.submit;
       }
+    });
+
+    // ── Overlay 「無料Wi-Fiへの接続方法」 (igual que ticket.html) ────────
+    document.addEventListener("DOMContentLoaded", function () {
+      const howtoLink    = document.getElementById("wifi-howto-link");
+      const overlay      = document.getElementById("wifi-overlay");
+      const overlayClose = document.getElementById("wifi-overlay-close");
+
+      if (!howtoLink || !overlay || !overlayClose) return;
+
+      function openOverlay() {
+        overlay.classList.add("open");
+      }
+      function closeOverlay() {
+        overlay.classList.remove("open");
+      }
+
+      howtoLink.addEventListener("click", openOverlay);
+      overlayClose.addEventListener("click", closeOverlay);
+
+      // Close when clicking outside the image
+      overlay.addEventListener("click", function (e) {
+        if (e.target === overlay) closeOverlay();
+      });
+
+      // Close with Escape key
+      document.addEventListener("keydown", function (e) {
+        if (e.key === "Escape" && overlay.classList.contains("open")) closeOverlay();
+      });
     });
   </script>
 </body>
