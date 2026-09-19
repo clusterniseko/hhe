@@ -631,12 +631,38 @@
     }
 
     // ── 送信完了画面 ───────────────────────────────────────────────────
+    // El estado "ya registrado" se guarda para que el huésped no pueda
+    // volver al formulario, ni con el botón atrás ni recargando la página.
+    const DONE_KEY = "hnv_media_done";
+
+    function bloquearBack() {
+      history.pushState(null, null, location.href);
+      window.onpopstate = function () { history.go(1); };
+    }
+
     function showThankYou(fullName) {
       document.getElementById("nombre-display").textContent = fullName + " 様";
       document.getElementById("error").style.display = "none";
       document.body.classList.add("done");
+      bloquearBack();
       window.scrollTo({ top: 0, behavior: "smooth" });
     }
+
+    // Reinicio para el personal: abrir media.html?reset=1 libera el equipo
+    // (útil en una tablet de recepción usada por varios huéspedes).
+    if (new URLSearchParams(location.search).has("reset")) {
+      try { localStorage.removeItem(DONE_KEY); } catch (err) {}
+      history.replaceState(null, "", location.pathname);
+    }
+
+    // Al cargar: si este navegador ya completó el registro, saltar directo
+    // a la pantalla de agradecimiento.
+    (function restoreDoneState() {
+      let saved = null;
+      try { saved = JSON.parse(localStorage.getItem(DONE_KEY) || "null"); }
+      catch (err) { saved = null; }
+      if (saved && saved.name) showThankYou(saved.name);
+    })();
 
     document.getElementById("ticketForm").addEventListener("submit", async function(e) {
       e.preventDefault();
@@ -709,7 +735,10 @@
 
         // ── Success: save to localStorage, then show thank-you ─────────
         saveRegistration(firstName, lastName, correo);
-        showThankYou(firstName + " " + lastName);
+        const fullName = firstName + " " + lastName;
+        try { localStorage.setItem(DONE_KEY, JSON.stringify({ name: fullName })); }
+        catch (err) { console.warn("Could not persist done state:", err); }
+        showThankYou(fullName);
 
       } catch (err) {
         errorEl.textContent = t.errorOffline;
