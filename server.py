@@ -43,6 +43,7 @@ def init_db():
                     phone       TEXT,
                     country     TEXT,
                     lang        TEXT      DEFAULT 'en',
+                    source      TEXT      DEFAULT 'web',
                     ticket_used BOOLEAN   DEFAULT FALSE,
                     deleted     BOOLEAN   DEFAULT FALSE,
                     deleted_at  TIMESTAMP,
@@ -66,6 +67,22 @@ def init_db():
                         WHERE table_name='registrations' AND column_name='deleted_at'
                     ) THEN
                         ALTER TABLE registrations ADD COLUMN deleted_at TIMESTAMP;
+                    END IF;
+                END $$;
+            """)
+            con.commit()
+
+            # 2b. Add source column to existing installs
+            #     'web'   → index.html (con drink ticket)
+            #     'media' → media.html (sin ticket)
+            run_sql(cur, "add source col", """
+                DO $$
+                BEGIN
+                    IF NOT EXISTS (
+                        SELECT 1 FROM information_schema.columns
+                        WHERE table_name='registrations' AND column_name='source'
+                    ) THEN
+                        ALTER TABLE registrations ADD COLUMN source TEXT DEFAULT 'web';
                     END IF;
                 END $$;
             """)
@@ -183,6 +200,12 @@ def register():
     country    = data.get("country", "").strip()
     lang       = data.get("lang", "en").strip()
 
+    # De qué formulario viene el registro. Solo se aceptan valores conocidos:
+    # cualquier otra cosa se guarda como 'web' para no ensuciar la columna.
+    source     = (data.get("source") or "web").strip().lower()
+    if source not in ("web", "media"):
+        source = "web"
+
     if not first_name or not last_name or not email:
         return jsonify({"error": "missing_fields"}), 400
 
@@ -206,9 +229,9 @@ def register():
 
                 cur.execute(
                     """INSERT INTO registrations
-                       (first_name, last_name, email, phone, country, lang)
-                       VALUES (%s, %s, %s, %s, %s, %s)""",
-                    (first_name, last_name, email, phone, country, lang)
+                       (first_name, last_name, email, phone, country, lang, source)
+                       VALUES (%s, %s, %s, %s, %s, %s, %s)""",
+                    (first_name, last_name, email, phone, country, lang, source)
                 )
             con.commit()
     except psycopg2.errors.UniqueViolation as e:
@@ -321,7 +344,7 @@ def admin_registrations():
         with con.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
             cur.execute(
                 """SELECT first_name, last_name, email, phone,
-                          country, lang, ticket_used, created_at
+                          country, lang, source, ticket_used, created_at
                    FROM registrations
                    WHERE deleted = FALSE
                    ORDER BY created_at DESC"""
@@ -340,7 +363,7 @@ def admin_trash():
         with con.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
             cur.execute(
                 """SELECT first_name, last_name, email, phone,
-                          country, lang, ticket_used, created_at, deleted_at
+                          country, lang, source, ticket_used, created_at, deleted_at
                    FROM registrations
                    WHERE deleted = TRUE
                    ORDER BY deleted_at DESC"""
