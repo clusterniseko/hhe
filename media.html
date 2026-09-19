@@ -31,10 +31,8 @@
       align-items: center;
       justify-content: flex-start;
       padding: 2.5rem 1rem 0;
+      -webkit-tap-highlight-color: transparent;
     }
-
-    /* Deja sitio para la barra fija de Wi-Fi una vez enviado el formulario */
-    body.done { padding-bottom: 190px; }
 
     h1, h2, h3 { font-family: 'Playfair Display', serif; }
 
@@ -207,54 +205,55 @@
     button[type="submit"]:active { transform: translateY(0); opacity: 1; }
     button[type="submit"]:disabled { opacity: 0.6; cursor: default; transform: none; }
 
-    /* ── Thank you ── */
-    .thankyou {
+    /* ─────────────────────────────────────────────────────────────────
+       Pantalla de agradecimiento — copiada de ticket.html
+       ───────────────────────────────────────────────────────────────── */
+    #gracias-view {
       display: none;
+      width: 100%;
+      max-width: 420px;
       text-align: center;
-      padding: 2.75rem 2rem;
+      animation: floatIn 0.6s ease-out;
     }
 
-    .thankyou.open { display: block; }
-
-    .thankyou-mark {
-      width: 60px;
-      height: 60px;
-      margin: 0 auto 1.5rem;
-      border-radius: 50%;
-      border: 1px solid var(--gold);
-      background: var(--gold-dim);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-
-    .thankyou-mark svg {
-      width: 26px;
-      height: 26px;
-    }
-
-    .thankyou h2 {
+    .hotel-name {
+      font-family: 'Playfair Display', serif;
       font-size: 1.5rem;
+      letter-spacing: 0.25em;
+      text-transform: uppercase;
+      color: hsl(40, 60%, 65%);
+      margin-bottom: 2rem;
+    }
+
+    #gracias h1 {
+      font-size: 3.5rem;
       font-weight: 700;
-      color: var(--cream);
-      margin-bottom: 0.5rem;
-    }
-
-    .thankyou-name {
-      font-size: 1.0625rem;
-      font-weight: 500;
-      color: var(--gold-light);
+      line-height: 1.1;
       margin-bottom: 1rem;
-      letter-spacing: 0.02em;
+      color: hsl(40, 50%, 95%);
+    }
+    #gracias .nombre {
+      color: hsl(40, 80%, 55%);
+      font-size: 1.6rem;
+      font-weight: 600;
+    }
+    #gracias .gracias-sub {
+      color: hsl(220, 15%, 55%);
+      font-size: 1rem;
+      margin-top: 0.75rem;
     }
 
-    .thankyou-body {
-      font-size: 0.9375rem;
-      line-height: 1.9;
-      color: var(--muted);
-      max-width: 26em;
-      margin: 0 auto;
+    /* Al enviar: la página pasa al layout de ticket.html */
+    body.done {
+      justify-content: center;
+      align-items: center;
+      padding: 1rem;
+      padding-bottom: 6.5rem;
     }
+    body.done .wrapper      { display: none; }
+    body.done .site-footer  { display: none; }
+    body.done #gracias-view { display: block; }
+    body.done .wifi-box     { display: block; }
 
     /* ── Wi-Fi (mismo bloque que ticket.html) ── */
     .wifi-box {
@@ -269,7 +268,6 @@
       text-align: center;
       z-index: 10;
     }
-    body.done .wifi-box { display: block; }
     .wifi-label {
       font-size: 0.95rem;
       letter-spacing: 0.03em;
@@ -350,12 +348,12 @@
     .wifi-overlay-close:hover { background: hsl(40, 70%, 75%); }
 
     @keyframes floatIn {
-      from { opacity: 0; transform: translateY(24px); }
+      from { opacity: 0; transform: translateY(20px); }
       to { opacity: 1; transform: translateY(0); }
     }
 
     @media (prefers-reduced-motion: reduce) {
-      .wrapper { animation: none; }
+      .wrapper, #gracias-view { animation: none; }
       * { transition: none !important; }
     }
 
@@ -365,8 +363,6 @@
         padding: 1.5rem 0.75rem 2rem;
         align-items: flex-start;
       }
-
-      body.done { padding-bottom: 200px; }
 
       .wrapper {
         max-width: 100%;
@@ -404,17 +400,23 @@
         height: 54px;
         font-size: 1rem;
       }
-
-      .thankyou {
-        padding: 2.25rem 1.25rem;
-      }
-
-      .thankyou h2 {
-        font-size: 1.35rem;
-      }
     }
 
-    /* ── Small phones (max 380px) ── */
+    /* ── Agradecimiento en móvil — mismos valores que ticket.html ── */
+    @media (max-width: 480px) {
+      body.done {
+        padding: 1.5rem 1rem;
+        padding-top: 3rem;
+        padding-bottom: 7.5rem;
+        justify-content: flex-start;
+        align-items: center;
+      }
+      #gracias-view { max-width: 100%; }
+      .hotel-name { font-size: 1.15rem; letter-spacing: 0.2em; margin-bottom: 1.5rem; }
+      #gracias h1 { font-size: 2.75rem; }
+      #gracias .nombre { font-size: 1.3rem; }
+    }
+
     @media (max-width: 380px) {
       .header h1 {
         font-size: 1.35rem;
@@ -423,6 +425,10 @@
       .card {
         padding: 1.25rem 1rem;
       }
+    }
+
+    @media (max-width: 360px) {
+      #gracias h1 { font-size: 2.25rem; }
     }
 
     /* ── Site footer ── */
@@ -498,18 +504,16 @@
       </form>
     </div>
 
-    <!-- 送信完了後に表示 -->
-    <div class="card thankyou" id="thankyou">
-      <div class="thankyou-mark" aria-hidden="true">
-        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <path d="M4 12.5l5.2 5.2L20 7" stroke="hsl(40, 80%, 55%)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-        </svg>
-      </div>
-      <h2>ありがとうございます</h2>
-      <p class="thankyou-name" id="thankyou-name"></p>
-      <p class="thankyou-body">ご登録が完了しました。ヒルトン ニセコビレッジでお会いできることを楽しみにしております。</p>
-    </div>
+  </div>
 
+  <!-- 送信完了画面 — ticket.html と同じレイアウト -->
+  <div id="gracias-view">
+    <p class="hotel-name">Hilton Niseko Village</p>
+    <div id="gracias">
+      <h1 id="gracias-heading">ありがとう<br>ございます</h1>
+      <p class="nombre" id="nombre-display"></p>
+      <p class="gracias-sub" id="gracias-sub">ご滞在をお楽しみください。</p>
+    </div>
   </div>
 
   <footer class="site-footer">
@@ -628,12 +632,9 @@
 
     // ── 送信完了画面 ───────────────────────────────────────────────────
     function showThankYou(fullName) {
-      document.getElementById("thankyou-name").textContent = fullName + " 様";
-      document.getElementById("form-card").style.display = "none";
-      document.getElementById("subtitle").style.display  = "none";
-      document.getElementById("error").style.display     = "none";
-      document.getElementById("thankyou").classList.add("open");
-      document.body.classList.add("done");   // muestra la barra de Wi-Fi
+      document.getElementById("nombre-display").textContent = fullName + " 様";
+      document.getElementById("error").style.display = "none";
+      document.body.classList.add("done");
       window.scrollTo({ top: 0, behavior: "smooth" });
     }
 
