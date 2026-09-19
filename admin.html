@@ -325,6 +325,7 @@
 
     .stat-card .value.gold { color: var(--gold); }
     .stat-card .value.green { color: var(--green); }
+    .stat-card .value.muted-value { color: hsl(220, 15%, 65%); }
 
     /* ── Controls ── */
     .controls {
@@ -590,6 +591,13 @@
       background: hsla(40, 80%, 55%, 0.12);
       color: var(--gold-light);
       border: 1px solid hsla(40, 80%, 55%, 0.25);
+    }
+
+    /* Registros de media.html: no llevan ticket */
+    .badge-noticket {
+      background: hsla(220, 15%, 55%, 0.12);
+      color: hsl(220, 15%, 65%);
+      border: 1px solid hsla(220, 15%, 55%, 0.28);
     }
 
     .empty-state {
@@ -1494,6 +1502,10 @@
         <p class="label">Tickets pending</p>
         <p class="value" id="stat-pending">—</p>
       </div>
+      <div class="stat-card">
+        <p class="label">No ticket</p>
+        <p class="value muted-value" id="stat-noticket">—</p>
+      </div>
       <div class="stat-card" style="display:flex; flex-direction:column; gap:8px;">
         <p class="label">WiFi password (monthly)</p>
         <div style="display:grid; grid-template-columns:1fr 1fr; gap:6px;">
@@ -1920,14 +1932,21 @@
       }
     });
 
+    // Registros que vienen de media.html: no llevan drink ticket.
+    function isNoTicket(r) {
+      return r.source === "media";
+    }
+
     // ── Stats ──────────────────────────────────────────────────────
     function updateStats() {
-      const total   = allData.length;
-      const used    = allData.filter(r => r.ticket_used).length;
-      const pending = total - used;
-      document.getElementById("stat-total").textContent   = total;
-      document.getElementById("stat-used").textContent    = used;
-      document.getElementById("stat-pending").textContent = pending;
+      const total    = allData.length;
+      const noTicket = allData.filter(r => isNoTicket(r)).length;
+      const used     = allData.filter(r => !isNoTicket(r) &&  r.ticket_used).length;
+      const pending  = allData.filter(r => !isNoTicket(r) && !r.ticket_used).length;
+      document.getElementById("stat-total").textContent    = total;
+      document.getElementById("stat-used").textContent     = used;
+      document.getElementById("stat-pending").textContent  = pending;
+      document.getElementById("stat-noticket").textContent = noTicket;
     }
 
     // ── Filter ─────────────────────────────────────────────────────
@@ -1985,8 +2004,8 @@
       }
 
       let rows = allData.filter(r => {
-        if (activeFilter === "used"    && !r.ticket_used) return false;
-        if (activeFilter === "pending" &&  r.ticket_used) return false;
+        if (activeFilter === "used"    && (isNoTicket(r) || !r.ticket_used)) return false;
+        if (activeFilter === "pending" && (isNoTicket(r) ||  r.ticket_used)) return false;
         if (dateVal) {
           if (!r.created_at) return false;
           if (toJSTDateString(r.created_at) !== dateVal) return false;
@@ -2023,9 +2042,11 @@
         const date = r.created_at
           ? toJSTDateTimeString(r.created_at)
           : "—";
-        const badge = r.ticket_used
-          ? `<span class="badge badge-used">Used</span>`
-          : `<span class="badge badge-pending">Pending</span>`;
+        const badge = isNoTicket(r)
+          ? `<span class="badge badge-noticket">No ticket</span>`
+          : r.ticket_used
+            ? `<span class="badge badge-used">Used</span>`
+            : `<span class="badge badge-pending">Pending</span>`;
         const checked = selectedRecords.has(r.email) ? "checked" : "";
         const safeEmail = (r.email || "").replace(/'/g, "\\'");
         return `

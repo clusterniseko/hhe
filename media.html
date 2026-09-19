@@ -711,7 +711,7 @@
         const res = await fetch(`${API_URL}/register`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ firstName, lastName, email: correo, phone, country, lang: LANG })
+          body: JSON.stringify({ firstName, lastName, email: correo, phone, country, lang: LANG, source: "media" })
         });
 
         const data = await res.json();
