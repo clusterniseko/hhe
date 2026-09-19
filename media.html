@@ -1,0 +1,569 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ヒルトン ニセコビレッジ – ヒルトン・オナーズご入会</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700;800&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --navy: hsl(220, 55%, 14%);
+      --navy-mid: hsl(220, 45%, 18%);
+      --navy-light: hsl(220, 35%, 24%);
+      --navy-border: hsl(220, 30%, 28%);
+      --gold: hsl(40, 80%, 55%);
+      --gold-light: hsl(40, 90%, 70%);
+      --gold-dim: hsla(40, 80%, 55%, 0.15);
+      --cream: hsl(40, 50%, 94%);
+      --muted: hsl(220, 20%, 55%);
+      --error: hsl(0, 75%, 60%);
+    }
+
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: var(--navy);
+      color: var(--cream);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      padding: 2.5rem 1rem 0;
+    }
+
+    h1, h2, h3 { font-family: 'Playfair Display', serif; }
+
+    .wrapper {
+      width: 100%;
+      max-width: 520px;
+      animation: floatIn 0.6s ease-out;
+    }
+
+    /* ── Header ── */
+    .header {
+      text-align: center;
+      margin-bottom: 2rem;
+    }
+
+    .hotel-eyebrow {
+      font-size: 0.7rem;
+      letter-spacing: 0.3em;
+      text-transform: uppercase;
+      color: var(--gold);
+      font-weight: 500;
+      margin-bottom: 0.75rem;
+    }
+
+    .header h1 {
+      font-size: 2rem;
+      font-weight: 700;
+      color: var(--cream);
+      margin-bottom: 0.4rem;
+      line-height: 1.15;
+    }
+
+    .header p {
+      color: var(--muted);
+      font-size: 0.875rem;
+    }
+
+    /* ── Card ── */
+    .card {
+      background: linear-gradient(160deg, var(--navy-mid), var(--navy));
+      border: 1px solid var(--navy-border);
+      border-radius: 18px;
+      padding: 2rem;
+    }
+
+    .section-title {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.125rem;
+      font-weight: 600;
+      color: var(--cream);
+      margin-bottom: 1.25rem;
+      padding-bottom: 0.75rem;
+      border-bottom: 1px solid var(--navy-border);
+    }
+
+    /* ── Form ── */
+    .field-group { margin-bottom: 1.25rem; }
+
+    .field-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.875rem;
+      margin-bottom: 1.25rem;
+    }
+
+    label {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      font-size: 0.8125rem;
+      font-weight: 500;
+      color: var(--cream);
+      margin-bottom: 0.4rem;
+    }
+
+    label .req {
+      font-size: 0.75rem;
+      color: var(--gold);
+      font-style: italic;
+      font-weight: 400;
+    }
+
+    input, select {
+      width: 100%;
+      height: 46px;
+      padding: 0 1rem;
+      border-radius: 10px;
+      border: 1px solid var(--navy-border);
+      background: hsl(220, 40%, 11%);
+      color: var(--cream);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.9375rem;
+      outline: none;
+      appearance: none;
+      -webkit-appearance: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    select {
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23888' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 1rem center;
+      padding-right: 2.5rem;
+      cursor: pointer;
+    }
+
+    input::placeholder { color: hsl(220, 20%, 38%); }
+    select option { background: hsl(220, 45%, 15%); }
+
+    input:focus, select:focus {
+      border-color: var(--gold);
+      box-shadow: 0 0 0 3px var(--gold-dim);
+    }
+
+    .sub-label {
+      font-size: 0.75rem;
+      color: var(--muted);
+      margin-top: 0.3rem;
+    }
+
+    /* ── Privacy ── */
+    .privacy {
+      background: hsla(220, 40%, 10%, 0.6);
+      border: 1px solid var(--navy-border);
+      border-radius: 10px;
+      padding: 1rem 1.125rem;
+      font-size: 0.78rem;
+      line-height: 1.75;
+      color: hsl(220, 15%, 55%);
+      margin-bottom: 1.5rem;
+    }
+
+    .privacy a {
+      color: var(--gold-light);
+      text-decoration: underline;
+      text-decoration-color: hsla(40, 80%, 65%, 0.4);
+    }
+
+    .privacy a:hover { color: var(--gold); }
+
+    /* ── Error ── */
+    .error {
+      background: hsla(0, 75%, 55%, 0.12);
+      border: 1px solid hsla(0, 75%, 55%, 0.4);
+      color: hsl(0, 85%, 70%);
+      padding: 0.75rem 1rem;
+      border-radius: 10px;
+      margin-bottom: 1rem;
+      font-size: 0.875rem;
+      display: none;
+    }
+
+    /* ── Button ── */
+    button[type="submit"] {
+      width: 100%;
+      height: 52px;
+      border: none;
+      border-radius: 10px;
+      background: linear-gradient(135deg, var(--gold), hsl(30, 90%, 45%));
+      color: var(--navy);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      letter-spacing: 0.04em;
+      transition: opacity 0.2s, transform 0.15s;
+    }
+
+    button[type="submit"]:hover { opacity: 0.92; transform: translateY(-1px); }
+    button[type="submit"]:active { transform: translateY(0); opacity: 1; }
+    button[type="submit"]:disabled { opacity: 0.6; cursor: default; transform: none; }
+
+    /* ── Thank you ── */
+    .thankyou {
+      display: none;
+      text-align: center;
+      padding: 2.75rem 2rem;
+    }
+
+    .thankyou.open { display: block; }
+
+    .thankyou-mark {
+      width: 60px;
+      height: 60px;
+      margin: 0 auto 1.5rem;
+      border-radius: 50%;
+      border: 1px solid var(--gold);
+      background: var(--gold-dim);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .thankyou-mark svg {
+      width: 26px;
+      height: 26px;
+    }
+
+    .thankyou h2 {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--cream);
+      margin-bottom: 0.75rem;
+    }
+
+    .thankyou p {
+      font-size: 0.9375rem;
+      line-height: 1.9;
+      color: var(--muted);
+      max-width: 26em;
+      margin: 0 auto;
+    }
+
+    @keyframes floatIn {
+      from { opacity: 0; transform: translateY(24px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .wrapper { animation: none; }
+      * { transition: none !important; }
+    }
+
+    /* ── Tablet (max 640px) ── */
+    @media (max-width: 640px) {
+      body {
+        padding: 1.5rem 0.75rem 2rem;
+        align-items: flex-start;
+      }
+
+      .wrapper {
+        max-width: 100%;
+      }
+
+      .header h1 {
+        font-size: 1.6rem;
+      }
+
+      .header p {
+        font-size: 0.825rem;
+      }
+
+      .card {
+        padding: 1.5rem 1.125rem;
+        border-radius: 14px;
+      }
+
+      .section-title {
+        font-size: 1rem;
+      }
+
+      /* Stack first/last name on mobile */
+      .field-row {
+        grid-template-columns: 1fr;
+        gap: 1.25rem;
+      }
+
+      input, select {
+        height: 50px;          /* easier tap target */
+        font-size: 1rem;       /* prevents iOS auto-zoom (must be ≥16px) */
+      }
+
+      button[type="submit"] {
+        height: 54px;
+        font-size: 1rem;
+      }
+
+      .thankyou {
+        padding: 2.25rem 1.25rem;
+      }
+
+      .thankyou h2 {
+        font-size: 1.35rem;
+      }
+    }
+
+    /* ── Small phones (max 380px) ── */
+    @media (max-width: 380px) {
+      .header h1 {
+        font-size: 1.35rem;
+      }
+
+      .card {
+        padding: 1.25rem 1rem;
+      }
+    }
+
+    /* ── Site footer ── */
+    .site-footer {
+      width: 100%;
+      max-width: 520px;
+      margin-top: 3rem;
+      padding: 1.5rem 0 2rem;
+      border-top: 1px solid hsla(40, 30%, 60%, 0.08);
+      text-align: center;
+      font-size: 0.72rem;
+      font-weight: 500;
+      letter-spacing: 0.12em;
+      color: hsla(40, 30%, 80%, 0.4);
+    }
+  </style>
+</head>
+<body>
+  <div class="wrapper">
+
+    <div class="header">
+      <div class="hotel-eyebrow">Hilton Niseko Village</div>
+      <h1>ヒルトン・オナーズへのご入会</h1>
+      <p id="subtitle">特に記載のない限り、すべての項目は必須です。</p>
+    </div>
+
+    <div id="error" class="error"></div>
+
+    <div class="card" id="form-card">
+      <p class="section-title">ヒルトン・オナーズへのご入会</p>
+
+      <form id="ticketForm">
+
+        <div class="field-row">
+          <div>
+            <label><span>姓 (半角ローマ字）</span> <span class="req">（必須）</span></label>
+            <input type="text" id="firstName" required>
+          </div>
+          <div>
+            <label><span>名 (半角ローマ字）</span> <span class="req">（必須）</span></label>
+            <input type="text" id="lastName" required>
+          </div>
+        </div>
+
+        <div class="field-group">
+          <label><span>携帯電話番号</span> <span class="req">（必須）</span></label>
+          <input type="tel" id="phone" required>
+        </div>
+
+        <div class="field-group">
+          <label><span>メールアドレス</span> <span class="req">（必須）</span></label>
+          <input type="email" id="correo" required>
+        </div>
+
+        <div class="field-group">
+          <label><span>国 / 地域 (半角ローマ字）</span> <span class="req">（必須）</span></label>
+          <input type="text" id="country" required>
+        </div>
+
+        <div class="privacy">
+          送信をクリックすることで、
+          <a href="https://www.hilton.com/en/hilton-honors/terms/" target="_blank" rel="noopener">ヒルトン・オナーズ プログラム利用規約</a>
+          に同意し、
+          <a href="https://www.hilton.com/en/hilton-honors/privacy-policy/" target="_blank" rel="noopener">ヒルトン グローバル プライバシーポリシー</a>
+          に記載された情報の収集、使用、共有、転送に同意します。また、Hiltonからのメールおよびダイレクトメールによる特別オファーやプロモーションの受信に同意します。
+          ヒルトン・オナーズのプロフィールで購読設定を変更することで、オファーやプロモーションの配信を停止できることを了承します。
+          <a href="https://www.hilton.com/en/hilton-honors/california-privacy/" target="_blank" rel="noopener">カリフォルニア州の消費者の方はこちら</a>
+          Hiltonによる個人情報の収集と利用について。
+        </div>
+
+        <button type="submit">送信</button>
+
+      </form>
+    </div>
+
+    <!-- 送信完了後に表示 -->
+    <div class="card thankyou" id="thankyou">
+      <div class="thankyou-mark" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M4 12.5l5.2 5.2L20 7" stroke="hsl(40, 80%, 55%)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
+      <h2>ありがとうございます</h2>
+      <p>ご登録が完了しました。ヒルトン ニセコビレッジでお会いできることを楽しみにしております。</p>
+    </div>
+
+  </div>
+
+  <footer class="site-footer">
+    &copy; 2026 YOB&AIM &middot; All rights reserved
+  </footer>
+
+  <script>
+    // ─────────────────────────────────────────────────────────────────
+    // 🔧 CONFIGURACIÓN — misma API que index.html
+    // ─────────────────────────────────────────────────────────────────
+    const API_URL = "https://hhe-production.up.railway.app";
+
+    // Página solo en japonés: el idioma que se guarda en la base de datos.
+    const LANG = "ja";
+
+    // Mensajes generados desde JS (el resto del texto está en el HTML).
+    const t = {
+      errorRequired:  "すべての必須項目を入力してください。",
+      errorUsedName:  "この氏名はすでに登録済みです。",
+      errorUsedEmail: "このメールアドレスはすでに登録済みです。",
+      errorUsed:      "この氏名とメールアドレスはすでに登録済みです。",
+      errorServer:    "サーバーエラーが発生しました。もう一度お試しください。",
+      errorOffline:   "サーバーに接続できません。接続を確認してください。",
+      submitting:     "送信中…",
+      submit:         "送信",
+    };
+
+    // ── Latin-only input filter ────────────────────────────────────────
+    // Allows: a-z, A-Z, accented/diacritic latin chars, spaces, hyphens, apostrophes
+    const LATIN_REGEX = /^[A-Za-zÀ-ɏ\s\-\'\u2019\.]*$/;
+
+    function enforceLatin(input) {
+      input.addEventListener("input", function () {
+        const val = this.value;
+        if (!LATIN_REGEX.test(val)) {
+          // Remove any non-latin character typed
+          this.value = [...val].filter(ch => LATIN_REGEX.test(ch)).join("");
+          this.style.borderColor = "var(--error)";
+          setTimeout(() => this.style.borderColor = "", 600);
+        }
+      });
+    }
+
+    enforceLatin(document.getElementById("firstName"));
+    enforceLatin(document.getElementById("lastName"));
+    enforceLatin(document.getElementById("country"));
+
+    // ── localStorage helpers ───────────────────────────────────────────
+    // NOTE: MISMA clave que index.html a propósito. Los dos formularios
+    // comparten el registro de duplicados: quien ya se registró en uno
+    // queda bloqueado en el otro.
+    const STORAGE_KEY = "hnv_registrations";
+
+    function getRegistrations() {
+      try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]"); }
+      catch { return []; }
+    }
+    function saveRegistration(firstName, lastName, email) {
+      const list = getRegistrations();
+      list.push({ name: (firstName + " " + lastName).toLowerCase(), email: email.toLowerCase() });
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(list));
+    }
+    function checkDuplicate(firstName, lastName, email) {
+      const fullName = (firstName + " " + lastName).toLowerCase();
+      const lowerEmail = email.toLowerCase();
+      const list = getRegistrations();
+      const nameTaken  = list.some(r => r.name  === fullName);
+      const emailTaken = list.some(r => r.email === lowerEmail);
+      return { nameTaken, emailTaken };
+    }
+
+    // ── 送信完了画面 ───────────────────────────────────────────────────
+    function showThankYou() {
+      document.getElementById("form-card").style.display = "none";
+      document.getElementById("subtitle").style.display  = "none";
+      document.getElementById("error").style.display     = "none";
+      document.getElementById("thankyou").classList.add("open");
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+
+    document.getElementById("ticketForm").addEventListener("submit", async function(e) {
+      e.preventDefault();
+      const errorEl = document.getElementById("error");
+      const submitBtn = document.querySelector("button[type='submit']");
+      errorEl.style.display = "none";
+
+      const firstName = document.getElementById("firstName").value.trim();
+      const lastName  = document.getElementById("lastName").value.trim();
+      const correo    = document.getElementById("correo").value.trim().toLowerCase();
+      const phone     = document.getElementById("phone").value.trim();
+      const country   = document.getElementById("country").value.trim();
+
+      if (!firstName || !lastName || !correo || !phone || !country) {
+        errorEl.textContent = t.errorRequired;
+        errorEl.style.display = "block";
+        window.scrollTo({ top: 0, behavior: "smooth" });
+        return;
+      }
+
+      // ── Dual duplicate check (localStorage) ──────────────────────────
+      const { nameTaken, emailTaken } = checkDuplicate(firstName, lastName, correo);
+      if (nameTaken && emailTaken) {
+        errorEl.textContent = t.errorUsed;
+        errorEl.style.display = "block";
+        window.scrollTo({ top: 0, behavior: "smooth" });
+        return;
+      }
+      if (nameTaken) {
+        errorEl.textContent = t.errorUsedName;
+        errorEl.style.display = "block";
+        window.scrollTo({ top: 0, behavior: "smooth" });
+        return;
+      }
+      if (emailTaken) {
+        errorEl.textContent = t.errorUsedEmail;
+        errorEl.style.display = "block";
+        window.scrollTo({ top: 0, behavior: "smooth" });
+        return;
+      }
+
+      submitBtn.disabled = true;
+      submitBtn.textContent = t.submitting;
+
+      try {
+        const res = await fetch(`${API_URL}/register`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ firstName, lastName, email: correo, phone, country, lang: LANG })
+        });
+
+        const data = await res.json();
+
+        if (!res.ok) {
+          if (res.status === 409) {
+            // Server-side duplicate — determine which field caused it if possible
+            const msg = (data.field === "email") ? t.errorUsedEmail
+                      : (data.field === "name")  ? t.errorUsedName
+                      : t.errorUsed;
+            errorEl.textContent = msg;
+          } else {
+            errorEl.textContent = t.errorServer;
+          }
+          errorEl.style.display = "block";
+          window.scrollTo({ top: 0, behavior: "smooth" });
+          submitBtn.disabled = false;
+          submitBtn.textContent = t.submit;
+          return;
+        }
+
+        // ── Success: save to localStorage, then show thank-you ─────────
+        saveRegistration(firstName, lastName, correo);
+        showThankYou();
+
+      } catch (err) {
+        errorEl.textContent = t.errorOffline;
+        errorEl.style.display = "block";
+        window.scrollTo({ top: 0, behavior: "smooth" });
+        submitBtn.disabled = false;
+        submitBtn.textContent = t.submit;
+      }
+    });
+  </script>
+</body>
+</html>
