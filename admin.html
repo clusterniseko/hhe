@@ -325,7 +325,6 @@
 
     .stat-card .value.gold { color: var(--gold); }
     .stat-card .value.green { color: var(--green); }
-    .stat-card .value.muted-value { color: hsl(220, 15%, 65%); }
 
     /* ── Controls ── */
     .controls {
@@ -1502,10 +1501,6 @@
         <p class="label">Tickets pending</p>
         <p class="value" id="stat-pending">—</p>
       </div>
-      <div class="stat-card">
-        <p class="label">No ticket</p>
-        <p class="value muted-value" id="stat-noticket">—</p>
-      </div>
       <div class="stat-card" style="display:flex; flex-direction:column; gap:8px;">
         <p class="label">WiFi password (monthly)</p>
         <div style="display:grid; grid-template-columns:1fr 1fr; gap:6px;">
@@ -1940,13 +1935,11 @@
     // ── Stats ──────────────────────────────────────────────────────
     function updateStats() {
       const total    = allData.length;
-      const noTicket = allData.filter(r => isNoTicket(r)).length;
       const used     = allData.filter(r => !isNoTicket(r) &&  r.ticket_used).length;
       const pending  = allData.filter(r => !isNoTicket(r) && !r.ticket_used).length;
       document.getElementById("stat-total").textContent    = total;
       document.getElementById("stat-used").textContent     = used;
       document.getElementById("stat-pending").textContent  = pending;
-      document.getElementById("stat-noticket").textContent = noTicket;
     }
 
     // ── Filter ─────────────────────────────────────────────────────
